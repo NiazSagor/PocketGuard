@@ -1,6 +1,16 @@
-import 'package:flutter/material.dart';
+import 'dart:ui';
 
-void main() {
+import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:pocket_guard/style.dart';
+
+void main() async {
+  DartPluginRegistrant.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
+  await FlutterDisplayMode.setHighRefreshRate();
+  final lightTheme = await MaterialThemeInstance.getLightTheme();
+  final darkTheme = await MaterialThemeInstance.getDarkTheme();
+  final themeMode = await MaterialThemeInstance.getThemeMode();
   runApp(const MyApp());
 }
 
