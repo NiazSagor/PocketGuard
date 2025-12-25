@@ -5,22 +5,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:i18n_extension/i18n_extension.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pocket_guard/services/locale-service.dart';
+import 'package:pocket_guard/services/service-config.dart';
 import 'package:pocket_guard/shell.dart';
 import 'package:pocket_guard/style.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest_all.dart' as tz_data;
 
 void main() async {
   DartPluginRegistrant.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
+  tz_data.initializeTimeZones();
+
+  ServiceConfig.localTimezone = await FlutterTimezone.getLocalTimezone();
+  PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  ServiceConfig.packageName = packageInfo.packageName;
+  ServiceConfig.version = packageInfo.version;
+  ServiceConfig.isPremium = packageInfo.packageName.endsWith("pro");
+  ServiceConfig.sharedPreferences = await SharedPreferences.getInstance();
   await FlutterDisplayMode.setHighRefreshRate();
-  final lightTheme = await MaterialThemeInstance.getLightTheme();
-  final darkTheme = await MaterialThemeInstance.getDarkTheme();
-  final themeMode = await MaterialThemeInstance.getThemeMode();
 
   final languageLocale = LocaleService.resolveLanguageLocale();
   final currencyLocale = LocaleService.resolveCurrencyLocale();
   LocaleService.setCurrencyLocale(currencyLocale);
+
+  final lightTheme = await MaterialThemeInstance.getLightTheme();
+  final darkTheme = await MaterialThemeInstance.getDarkTheme();
+  final themeMode = await MaterialThemeInstance.getThemeMode();
 
   runApp(
     MyApp(

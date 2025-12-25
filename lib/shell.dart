@@ -6,6 +6,7 @@ import 'package:local_auth_platform_interface/types/auth_options.dart';
 import 'package:pocket_guard/records/records-page.dart';
 import 'package:pocket_guard/settings/constants/preferences-keys.dart';
 import 'package:pocket_guard/settings/preferences-utils.dart';
+import 'package:pocket_guard/settings/settings-page.dart';
 import 'package:pocket_guard/style.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
