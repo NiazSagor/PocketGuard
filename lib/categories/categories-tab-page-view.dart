@@ -11,7 +11,8 @@ enum SortOption { original, lastUsed, mostUsed, alphabetical }
 
 class CategoryTabPageView extends StatefulWidget {
   final bool? goToEditMovementPage;
-  CategoryTabPageView({this.goToEditMovementPage, Key? key}) : super(key: key);
+  final bool? goToTemplateMovementPage;
+  CategoryTabPageView({this.goToEditMovementPage, this.goToTemplateMovementPage, Key? key}) : super(key: key);
 
   @override
   CategoryTabPageViewState createState() => CategoryTabPageViewState();
@@ -329,6 +330,7 @@ class CategoryTabPageViewState extends State<CategoryTabPageView> {
                             element!.categoryType == CategoryType.expense)
                         .toList(),
                     goToEditMovementPage: widget.goToEditMovementPage,
+                    goToTemplateMovementPage: widget.goToTemplateMovementPage,
                     enableManualSorting:
                         _selectedSortOption == SortOption.original,
                     onChangeOrder: onCategoriesReorder)
@@ -340,6 +342,7 @@ class CategoryTabPageViewState extends State<CategoryTabPageView> {
                             element!.categoryType == CategoryType.income)
                         .toList(),
                     goToEditMovementPage: widget.goToEditMovementPage,
+                    goToTemplateMovementPage: widget.goToTemplateMovementPage,
                     enableManualSorting:
                         _selectedSortOption == SortOption.original,
                     onChangeOrder: onCategoriesReorder)

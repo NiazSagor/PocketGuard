@@ -9,6 +9,7 @@ import 'package:pocket_guard/services/backup-service.dart';
 import 'package:pocket_guard/services/csv-service.dart';
 import 'package:pocket_guard/services/recurrent-record-service.dart';
 import 'package:pocket_guard/statistics/statistics-page.dart';
+import 'package:pocket_guard/template/templates-list.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pocket_guard/models/record.dart';
 
@@ -255,6 +256,15 @@ class TabRecordsController {
     } else {
       await _showNoCategoryDialog(context);
     }
+  }
+
+  Future<void> navigateToTemplates(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TemplatesList(),
+      ),
+    );
   }
 
   void navigateToStatisticsPage(BuildContext context) {

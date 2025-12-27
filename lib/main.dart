@@ -103,7 +103,7 @@ class AppCore extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeMode,
-      title: "Oinkoin",
+      title: "PocketGuard",
       home: Shell(),
     );
   }

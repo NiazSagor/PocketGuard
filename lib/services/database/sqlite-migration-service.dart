@@ -43,6 +43,20 @@ class SqliteMigrationService {
     batch.execute(query);
   }
 
+  static void _createTemplatesTable(Batch batch) {
+    String query = """
+      CREATE TABLE IF NOT EXISTS templates (
+              id          INTEGER  PRIMARY KEY AUTOINCREMENT,
+              value       REAL,
+              title       TEXT,
+              description TEXT,
+              category_name TEXT,
+              category_type INTEGER
+          );
+      """;
+    batch.execute(query);
+  }
+
   static void _createRecordsTagsTable(Batch batch) {
     String query = """
         CREATE TABLE IF NOT EXISTS records_tags (
@@ -364,6 +378,9 @@ class SqliteMigrationService {
     _createRecordsTable(batch);
     _createRecordsTagsTable(batch);
     _createRecurrentRecordPatternsTable(batch);
+
+    // create templates
+    _createTemplatesTable(batch);
 
     // Create Triggers
     _createAddRecordTrigger(batch);

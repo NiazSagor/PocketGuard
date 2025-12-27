@@ -4,6 +4,7 @@ import 'package:pocket_guard/models/category.dart';
 import 'package:pocket_guard/models/record.dart';
 import 'package:pocket_guard/models/record-tag-association.dart';
 import 'package:pocket_guard/models/recurrent-record-pattern.dart';
+import 'package:pocket_guard/models/template.dart';
 
 abstract class DatabaseInterface {
   /// DatabaseInterface is an interface that the database classes
@@ -25,10 +26,12 @@ abstract class DatabaseInterface {
   Future<Record?> getRecordById(int id);
   Future<void> deleteRecordById(int? id);
   Future<int> addRecord(Record? record);
+  Future<int> addTemplate(Template? template);
   Future<void> addRecordsInBatch(List<Record?> records);
   Future<int?> updateRecordById(int? recordId, Record? newRecord);
   Future<DateTime?> getDateTimeFirstRecord();
   Future<List<Record?>> getAllRecords();
+  Future<List<Template?>> getTemplates();
   Future<List<Record?>> getAllRecordsInInterval(DateTime? from, DateTime? to);
   Future<Record?> getMatchingRecord(Record? record);
   Future<void> deleteFutureRecordsByPatternId(
