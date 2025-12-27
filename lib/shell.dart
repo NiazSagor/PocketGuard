@@ -116,7 +116,7 @@ class ShellState extends State<Shell> {
             child: MaterialApp(
               home: TabRecords(key: _tabRecordsKey),
               localizationsDelegates: I18n.localizationsDelegates,
-              title: "Oinkoin",
+              title: "PocketGuard",
               theme: lightTheme,
               darkTheme: darkTheme,
               themeMode: themeMode,
@@ -129,7 +129,7 @@ class ShellState extends State<Shell> {
             enabled: _currentIndex == 1,
             child: MaterialApp(
               home: TabCategories(key: _tabCategoriesKey),
-              title: "Oinkoin",
+              title: "PocketGuard",
               localizationsDelegates: I18n.localizationsDelegates,
               theme: lightTheme,
               darkTheme: darkTheme,
@@ -144,7 +144,7 @@ class ShellState extends State<Shell> {
             child: MaterialApp(
               home: TabSettings(),
               localizationsDelegates: I18n.localizationsDelegates,
-              title: "Oinkoin",
+              title: "PocketGuard",
               theme: lightTheme,
               darkTheme: darkTheme,
               themeMode: themeMode,
