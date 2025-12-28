@@ -309,7 +309,6 @@ class EditRecordPageState extends State<EditRecordPage> {
     if (readOnly && record!.description == null) {
       return Container();
     }
-    debugPrint("_createAddNoteCard ${record!.description}");
     return Card(
       elevation: 1,
       child: Container(
@@ -824,7 +823,7 @@ class EditRecordPageState extends State<EditRecordPage> {
       title: Text(readOnly ? 'View record'.i18n : 'Edit record'.i18n),
       actions: <Widget>[
         Visibility(
-          visible: !readOnly,
+          visible: passedRecord == null && !readOnly,
           child: TextButton(
             onPressed: () async {
               var template = await Navigator.push(
@@ -837,7 +836,6 @@ class EditRecordPageState extends State<EditRecordPage> {
               if (template != null) {
                 setState(() {
                   selectedTemplate = template as Template;
-                  debugPrint("ssssssssssssssssssssss ${template.title}");
                   record!.title = template.title;
                   record!.category = template.category;
                   record!.value = template.value;
