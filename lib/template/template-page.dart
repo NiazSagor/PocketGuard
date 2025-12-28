@@ -124,6 +124,12 @@ class _TemplatePageState extends State<TemplatePage> {
               template!.title = text;
             });
           },
+          validator: (value) {
+            if (value!.isEmpty) {
+              return "Please enter a title".i18n;
+            }
+            return null;
+          },
           style: TextStyle(
             fontSize: 22.0,
             color: Theme.of(context).colorScheme.onSurface,

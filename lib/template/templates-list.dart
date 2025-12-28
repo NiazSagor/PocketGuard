@@ -10,7 +10,9 @@ import '../i18n.dart';
 class TemplatesList extends StatefulWidget {
   final void Function()? callback;
 
-  const TemplatesList({super.key, this.callback});
+  final bool? returnResult;
+
+  const TemplatesList({super.key, this.callback, this.returnResult});
 
   @override
   State<TemplatesList> createState() => _TemplatesListState();
@@ -90,6 +92,9 @@ class _TemplatesListState extends State<TemplatesList> {
   Widget _buildCategory(Template template) {
     return InkWell(
       onTap: () async {
+        if (widget.returnResult != null && widget.returnResult == true) {
+          Navigator.pop(context, template);
+        }
         // goto edit template page
         if (widget.callback != null) widget.callback!();
       },
