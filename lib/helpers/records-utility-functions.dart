@@ -218,7 +218,7 @@ String stripUnknownPatternCharacters(String toParse) {
 }
 
 AssetImage getBackgroundImage() {
-  if (!ServiceConfig.isPremium) {
+  if (ServiceConfig.isPremium) {
     return AssetImage('assets/images/background.jpg');
   } else {
     try {

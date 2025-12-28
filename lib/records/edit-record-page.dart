@@ -14,11 +14,13 @@ import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/category.dart';
 import 'package:pocket_guard/models/record.dart';
 import 'package:pocket_guard/models/recurrent-period.dart';
+import 'package:pocket_guard/models/template.dart';
 import 'package:pocket_guard/premium/splash-screen.dart';
 import 'package:pocket_guard/premium/util-widgets.dart';
 import 'package:pocket_guard/records/tag_selection_dialog.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
 import 'package:pocket_guard/services/service-config.dart';
+import 'package:pocket_guard/template/templates-list.dart';
 
 import '../components/category_icon_circle.dart';
 import '../i18n.dart';
@@ -32,22 +34,27 @@ class EditRecordPage extends StatefulWidget {
   final RecurrentRecordPattern? passedReccurrentRecordPattern;
   final bool readOnly;
 
-  EditRecordPage(
-      {Key? key,
-      this.passedRecord,
-      this.passedCategory,
-      this.passedReccurrentRecordPattern,
-      this.readOnly = false})
-      : super(key: key);
+  EditRecordPage({
+    Key? key,
+    this.passedRecord,
+    this.passedCategory,
+    this.passedReccurrentRecordPattern,
+    this.readOnly = false,
+  }) : super(key: key);
 
   @override
-  EditRecordPageState createState() => EditRecordPageState(this.passedRecord,
-      this.passedCategory, this.passedReccurrentRecordPattern, this.readOnly);
+  EditRecordPageState createState() => EditRecordPageState(
+    this.passedRecord,
+    this.passedCategory,
+    this.passedReccurrentRecordPattern,
+    this.readOnly,
+  );
 }
 
 class EditRecordPageState extends State<EditRecordPage> {
   DatabaseInterface database = ServiceConfig.database;
   TextEditingController _textEditingController = TextEditingController();
+  late TextEditingController _descriptionController;
   final _formKey = GlobalKey<FormState>();
   Record? record;
 
@@ -68,42 +75,57 @@ class EditRecordPageState extends State<EditRecordPage> {
   Set<String> _selectedTags = {};
   Set<String> _suggestedTags = {};
 
-  EditRecordPageState(this.passedRecord, this.passedCategory,
-      this.passedReccurrentRecordPattern, this.readOnly);
+  Template? selectedTemplate;
+
+  EditRecordPageState(
+    this.passedRecord,
+    this.passedCategory,
+    this.passedReccurrentRecordPattern,
+    this.readOnly,
+  );
 
   static final recurrentIntervalDropdownList = [
     new DropdownMenuItem<int>(
-        value: RecurrentPeriod.EveryDay.index, // 0
-        child: new Text("Every day".i18n, style: TextStyle(fontSize: 20.0))),
+      value: RecurrentPeriod.EveryDay.index, // 0
+      child: new Text("Every day".i18n, style: TextStyle(fontSize: 20.0)),
+    ),
     new DropdownMenuItem<int>(
-        value: RecurrentPeriod.EveryWeek.index, // 1
-        child: new Text("Every week".i18n, style: TextStyle(fontSize: 20.0))),
+      value: RecurrentPeriod.EveryWeek.index, // 1
+      child: new Text("Every week".i18n, style: TextStyle(fontSize: 20.0)),
+    ),
     new DropdownMenuItem<int>(
-        value: RecurrentPeriod.EveryTwoWeeks.index, // 3
-        child:
-            new Text("Every two weeks".i18n, style: TextStyle(fontSize: 20.0))),
+      value: RecurrentPeriod.EveryTwoWeeks.index, // 3
+      child: new Text("Every two weeks".i18n, style: TextStyle(fontSize: 20.0)),
+    ),
     new DropdownMenuItem<int>(
-        value: RecurrentPeriod.EveryFourWeeks.index, // 7
-        child:
-            new Text("Every four weeks".i18n, style: TextStyle(fontSize: 20.0))),
+      value: RecurrentPeriod.EveryFourWeeks.index, // 7
+      child: new Text(
+        "Every four weeks".i18n,
+        style: TextStyle(fontSize: 20.0),
+      ),
+    ),
     new DropdownMenuItem<int>(
       value: RecurrentPeriod.EveryMonth.index, // 2
       child: new Text("Every month".i18n, style: TextStyle(fontSize: 20.0)),
     ),
     new DropdownMenuItem<int>(
       value: RecurrentPeriod.EveryThreeMonths.index, // 4
-      child:
-          new Text("Every three months".i18n, style: TextStyle(fontSize: 20.0)),
+      child: new Text(
+        "Every three months".i18n,
+        style: TextStyle(fontSize: 20.0),
+      ),
     ),
     new DropdownMenuItem<int>(
       value: RecurrentPeriod.EveryFourMonths.index, // 5
-      child:
-          new Text("Every four months".i18n, style: TextStyle(fontSize: 20.0)),
+      child: new Text(
+        "Every four months".i18n,
+        style: TextStyle(fontSize: 20.0),
+      ),
     ),
     new DropdownMenuItem<int>(
       value: RecurrentPeriod.EveryYear.index, // 6
       child: new Text("Every year".i18n, style: TextStyle(fontSize: 20.0)),
-    )
+    ),
   ];
 
   bool isMathExpression(String text) {
@@ -145,8 +167,10 @@ class EditRecordPageState extends State<EditRecordPage> {
         text = getCurrencyValueString(newNum, turnOffGrouping: true);
         _textEditingController.value = _textEditingController.value.copyWith(
           text: text,
-          selection:
-              TextSelection(baseOffset: text.length, extentOffset: text.length),
+          selection: TextSelection(
+            baseOffset: text.length,
+            extentOffset: text.length,
+          ),
           composing: TextRange.empty,
         );
         changeRecordValue(_textEditingController.text.toLowerCase());
@@ -158,26 +182,34 @@ class EditRecordPageState extends State<EditRecordPage> {
   void initState() {
     super.initState();
 
+    _descriptionController = TextEditingController(
+      text: passedRecord?.description ?? "",
+    );
+
     // Loading preferences
     bool overwriteDotValue = getOverwriteDotValue();
     bool overwriteCommaValue = getOverwriteCommaValue();
     enableRecordNameSuggestions = PreferencesUtils.getOrDefault<bool>(
-        ServiceConfig.sharedPreferences!,
-        PreferencesKeys.enableRecordNameSuggestions)!;
+      ServiceConfig.sharedPreferences!,
+      PreferencesKeys.enableRecordNameSuggestions,
+    )!;
 
     // Loading parameters passed to the page
 
     if (passedRecord != null) {
       // I am editing an existing record
       record = passedRecord;
+      _descriptionController.text = record?.description ?? "";
       // Use the localDateTime getter for display purposes
       localDisplayDate = passedRecord!.localDateTime;
-      _textEditingController.text =
-          getCurrencyValueString(record!.value!.abs(), turnOffGrouping: true);
+      _textEditingController.text = getCurrencyValueString(
+        record!.value!.abs(),
+        turnOffGrouping: true,
+      );
       if (record!.recurrencePatternId != null) {
-        database
-            .getRecurrentRecordPattern(record!.recurrencePatternId)
-            .then((value) {
+        database.getRecurrentRecordPattern(record!.recurrencePatternId).then((
+          value,
+        ) {
           if (value != null) {
             setState(() {
               recurrentPeriod = value.recurrentPeriod;
@@ -205,8 +237,10 @@ class EditRecordPageState extends State<EditRecordPage> {
       // Use the localDateTime for display
       localDisplayDate = passedReccurrentRecordPattern!.localDateTime;
 
-      _textEditingController.text =
-          getCurrencyValueString(record!.value!.abs(), turnOffGrouping: true);
+      _textEditingController.text = getCurrencyValueString(
+        record!.value!.abs(),
+        turnOffGrouping: true,
+      );
       setState(() {
         recurrentPeriod = passedReccurrentRecordPattern!.recurrentPeriod;
         recurrentPeriodIndex =
@@ -267,6 +301,7 @@ class EditRecordPageState extends State<EditRecordPage> {
   void dispose() {
     _textEditingController.dispose();
     _typeAheadController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -277,29 +312,36 @@ class EditRecordPageState extends State<EditRecordPage> {
     return Card(
       elevation: 1,
       child: Container(
-        padding:
-            const EdgeInsets.only(bottom: 40.0, top: 10, right: 10, left: 10),
+        padding: const EdgeInsets.only(
+          bottom: 40.0,
+          top: 10,
+          right: 10,
+          left: 10,
+        ),
         child: Semantics(
           identifier: 'note-field',
           child: TextFormField(
-              onChanged: (text) {
-                setState(() {
-                  record!.description = text;
-                });
-              },
-              enabled: !readOnly,
-              style: TextStyle(
-                  fontSize: 22.0,
-                  color: Theme.of(context).colorScheme.onSurface),
-              initialValue: record!.description,
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-              decoration: InputDecoration(
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  hintText: "Add a note".i18n,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(10),
-                  label: Text("Note"))),
+            controller: _descriptionController,
+            onChanged: (text) {
+              setState(() {
+                record!.description = text;
+              });
+            },
+            enabled: !readOnly,
+            style: TextStyle(
+              fontSize: 22.0,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
+            decoration: InputDecoration(
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              hintText: "Add a note".i18n,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.all(10),
+              label: Text("Note"),
+            ),
+          ),
         ),
       ),
     );
@@ -318,44 +360,47 @@ class EditRecordPageState extends State<EditRecordPage> {
             return Semantics(
               identifier: 'record-name-field',
               child: TextFormField(
-                  enabled: !readOnly,
-                  controller: controller,
-                  focusNode: focusNode,
-                  onChanged: (text) {
-                    setState(() {
-                      record!.title = text;
-                    });
-                  },
-                  style: TextStyle(
-                      fontSize: 22.0,
-                      color: Theme.of(context).colorScheme.onSurface),
-                  maxLines: 1,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
-                      contentPadding: EdgeInsets.all(10),
-                      border: InputBorder.none,
-                      hintText: record!.category!.name,
-                      labelText: "Record name".i18n)),
+                enabled: !readOnly,
+                controller: controller,
+                focusNode: focusNode,
+                onChanged: (text) {
+                  setState(() {
+                    record!.title = text;
+                  });
+                },
+                style: TextStyle(
+                  fontSize: 22.0,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                maxLines: 1,
+                keyboardType: TextInputType.text,
+                decoration: InputDecoration(
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  contentPadding: EdgeInsets.all(10),
+                  border: InputBorder.none,
+                  hintText: record!.category!.name,
+                  labelText: "Record name".i18n,
+                ),
+              ),
             );
           },
           suggestionsCallback: (search) {
             if (search.isNotEmpty && enableRecordNameSuggestions) {
               return database.suggestedRecordTitles(
-                  search, record!.category!.name!);
+                search,
+                record!.category!.name!,
+              );
             }
             return null;
           },
           itemBuilder: (context, record) {
-            return ListTile(
-              title: Text(record),
-            );
+            return ListTile(title: Text(record));
           },
           onSelected: (selectedTitle) => {
             _typeAheadController.text = selectedTitle,
             setState(() {
               record!.title = selectedTitle;
-            })
+            }),
           },
           hideOnEmpty: true,
         ),
@@ -367,8 +412,9 @@ class EditRecordPageState extends State<EditRecordPage> {
     return Card(
       elevation: 1,
       child: Container(
-          padding: const EdgeInsets.all(15),
-          child: Column(children: [
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          children: [
             InkWell(
               onTap: () async {
                 if (readOnly) {
@@ -377,13 +423,15 @@ class EditRecordPageState extends State<EditRecordPage> {
                 var selectedCategory = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => CategoryTabPageView()),
+                    builder: (context) => CategoryTabPageView(),
+                  ),
                 );
                 if (selectedCategory != null) {
                   setState(() {
                     record!.category = selectedCategory;
-                    changeRecordValue(_textEditingController.text
-                        .toLowerCase()); // Handle sign change
+                    changeRecordValue(
+                      _textEditingController.text.toLowerCase(),
+                    ); // Handle sign change
                   });
                 }
               },
@@ -392,24 +440,27 @@ class EditRecordPageState extends State<EditRecordPage> {
                 child: Row(
                   children: [
                     CategoryIconCircle(
-                        iconEmoji: record!.category!.iconEmoji,
-                        iconDataFromDefaultIconSet: record!.category!.icon,
-                        backgroundColor: record!.category!.color),
+                      iconEmoji: record!.category!.iconEmoji,
+                      iconDataFromDefaultIconSet: record!.category!.icon,
+                      backgroundColor: record!.category!.color,
+                    ),
                     Container(
                       margin: EdgeInsets.fromLTRB(20, 10, 10, 10),
                       child: Text(
                         record!.category!.name!,
                         style: TextStyle(
-                            fontSize: 20,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant),
+                          fontSize: 20,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
             ),
-          ])),
+          ],
+        ),
+      ),
     );
   }
 
@@ -424,234 +475,252 @@ class EditRecordPageState extends State<EditRecordPage> {
     return Card(
       elevation: 1,
       child: Container(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            children: [
-              Semantics(
-                identifier: 'date-field',
-                child: InkWell(
-                    onTap: () async {
-                      if (readOnly) {
-                        return; // do nothing!
-                      }
-                      FocusScope.of(context).unfocus();
-                      // Use the localDisplayDate for the initial date
-                      DateTime initialDate = localDisplayDate ?? DateTime.now();
-                      DateTime? result = await showDatePicker(
-                          context: context,
-                          initialDate: initialDate,
-                          firstDate: DateTime(1970),
-                          lastDate:
-                              DateTime.now().add(new Duration(days: 365)));
-                      if (result != null) {
-                        setState(() {
-                          // Update the localDisplayDate
-                          localDisplayDate = result;
-                          // Convert the selected local date to a UTC date
-                          record!.utcDateTime = result.toUtc();
-                          record!.timeZoneName = ServiceConfig.localTimezone;
-                        });
-                      }
-                    },
-                    child: Container(
-                        margin: EdgeInsets.fromLTRB(10, 10, 0, 10),
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          children: [
+            Semantics(
+              identifier: 'date-field',
+              child: InkWell(
+                onTap: () async {
+                  if (readOnly) {
+                    return; // do nothing!
+                  }
+                  FocusScope.of(context).unfocus();
+                  // Use the localDisplayDate for the initial date
+                  DateTime initialDate = localDisplayDate ?? DateTime.now();
+                  DateTime? result = await showDatePicker(
+                    context: context,
+                    initialDate: initialDate,
+                    firstDate: DateTime(1970),
+                    lastDate: DateTime.now().add(new Duration(days: 365)),
+                  );
+                  if (result != null) {
+                    setState(() {
+                      // Update the localDisplayDate
+                      localDisplayDate = result;
+                      // Convert the selected local date to a UTC date
+                      record!.utcDateTime = result.toUtc();
+                      record!.timeZoneName = ServiceConfig.localTimezone;
+                    });
+                  }
+                },
+                child: Container(
+                  margin: EdgeInsets.fromLTRB(10, 10, 0, 10),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 28,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(left: 20, right: 20),
+                        child: Text(
+                          // Use the localDisplayDate for display
+                          getDateStr(localDisplayDate),
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Visibility(
+              visible: record!.id == null || recurrentPeriod != null,
+              child: Column(
+                children: [
+                  Divider(indent: 60, thickness: 1),
+                  Semantics(
+                    identifier: 'repeat-field',
+                    child: InkWell(
+                      child: Container(
+                        margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
                         child: Row(
                           children: [
                             Icon(
-                              Icons.calendar_today,
+                              Icons.repeat,
                               size: 28,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
-                            Container(
-                              margin: EdgeInsets.only(left: 20, right: 20),
-                              child: Text(
-                                // Use the localDisplayDate for display
-                                getDateStr(localDisplayDate),
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant),
-                              ),
-                            )
-                          ],
-                        ))),
-              ),
-              Visibility(
-                visible: record!.id == null || recurrentPeriod != null,
-                child: Column(
-                  children: [
-                    Divider(
-                      indent: 60,
-                      thickness: 1,
-                    ),
-                    Semantics(
-                      identifier: 'repeat-field',
-                      child: InkWell(
-                          child: Container(
-                              margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.repeat,
-                                      size: 28,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant),
-                                  Expanded(
-                                    child: Container(
-                                      margin:
-                                          EdgeInsets.only(left: 15, right: 10),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                              child: new DropdownButton<int>(
-                                            iconSize: 0.0,
-                                            items: recurrentIntervalDropdownList,
-                                            onChanged: ServiceConfig
-                                                        .isPremium &&
-                                                    record!.id == null
-                                                ? (value) {
-                                                    setState(() {
-                                                      recurrentPeriodIndex =
-                                                          value;
-                                                      recurrentPeriod =
-                                                          RecurrentPeriod
-                                                              .values[value!];
-                                                    });
-                                                  }
-                                                : null,
-                                            onTap: () {
-                                              FocusScope.of(context).unfocus();
-                                            },
-                                            value: recurrentPeriodIndex,
-                                            underline: SizedBox(),
-                                            isExpanded: true,
-                                            hint: recurrentPeriod == null
-                                                ? Container(
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                            left: 10.0),
-                                                    child: Text(
-                                                      "Not repeat".i18n,
-                                                      style: TextStyle(
-                                                          fontSize: 20.0,
-                                                          color: Theme.of(
-                                                                  context)
-                                                              .colorScheme
-                                                              .onSurfaceVariant),
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                            left: 10.0),
-                                                    child: Text(
-                                                      recurrentPeriodString(
-                                                          recurrentPeriod),
-                                                      style: TextStyle(
-                                                          fontSize: 20.0),
-                                                    ),
-                                                  ),
-                                          )),
-                                          Visibility(
-                                            child: getProLabel(
-                                                labelFontSize: 12.0),
-                                            visible: !ServiceConfig.isPremium,
-                                          ),
-                                          Visibility(
-                                            child: new IconButton(
-                                              icon: new Icon(Icons.close,
-                                                  size: 28,
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface),
-                                              onPressed: () {
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(left: 15, right: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: new DropdownButton<int>(
+                                        iconSize: 0.0,
+                                        items: recurrentIntervalDropdownList,
+                                        onChanged:
+                                            ServiceConfig.isPremium &&
+                                                record!.id == null
+                                            ? (value) {
                                                 setState(() {
-                                                  recurrentPeriod = null;
-                                                  recurrentPeriodIndex = null;
+                                                  recurrentPeriodIndex = value;
+                                                  recurrentPeriod =
+                                                      RecurrentPeriod
+                                                          .values[value!];
                                                 });
-                                              },
-                                            ),
-                                            visible: record!.id == null &&
-                                                recurrentPeriod != null,
-                                          )
-                                        ],
+                                              }
+                                            : null,
+                                        onTap: () {
+                                          FocusScope.of(context).unfocus();
+                                        },
+                                        value: recurrentPeriodIndex,
+                                        underline: SizedBox(),
+                                        isExpanded: true,
+                                        hint: recurrentPeriod == null
+                                            ? Container(
+                                                margin: const EdgeInsets.only(
+                                                  left: 10.0,
+                                                ),
+                                                child: Text(
+                                                  "Not repeat".i18n,
+                                                  style: TextStyle(
+                                                    fontSize: 20.0,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                                ),
+                                              )
+                                            : Container(
+                                                margin: const EdgeInsets.only(
+                                                  left: 10.0,
+                                                ),
+                                                child: Text(
+                                                  recurrentPeriodString(
+                                                    recurrentPeriod,
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 20.0,
+                                                  ),
+                                                ),
+                                              ),
                                       ),
                                     ),
-                                  )
-                                ],
-                              ))),
+                                    Visibility(
+                                      child: getProLabel(labelFontSize: 12.0),
+                                      visible: !ServiceConfig.isPremium,
+                                    ),
+                                    Visibility(
+                                      child: new IconButton(
+                                        icon: new Icon(
+                                          Icons.close,
+                                          size: 28,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            recurrentPeriod = null;
+                                            recurrentPeriodIndex = null;
+                                          });
+                                        },
+                                      ),
+                                      visible:
+                                          record!.id == null &&
+                                          recurrentPeriod != null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-              )
-            ],
-          )),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _createAmountCard() {
-    String categorySign =
-        record?.category?.categoryType == CategoryType.expense ? "-" : "+";
+    String categorySign = record?.category?.categoryType == CategoryType.expense
+        ? "-"
+        : "+";
     return Card(
       elevation: 1,
       child: Container(
-          child: IntrinsicHeight(
-              child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: EdgeInsets.all(10),
-              margin: EdgeInsets.only(left: 10, top: 25),
-              child: Text(categorySign,
-                  style: TextStyle(fontSize: 32), textAlign: TextAlign.left),
-            ),
+        child: IntrinsicHeight(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  margin: EdgeInsets.only(left: 10, top: 25),
+                  child: Text(
+                    categorySign,
+                    style: TextStyle(fontSize: 32),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  child: Semantics(
+                    identifier: 'amount-field',
+                    child: TextFormField(
+                      enabled: !readOnly,
+                      controller: _textEditingController,
+                      autofocus: record!.value == null,
+                      onChanged: (text) {
+                        changeRecordValue(text);
+                      },
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Please enter a value".i18n;
+                        }
+                        var numericValue = tryParseCurrencyString(value);
+                        if (numericValue == null) {
+                          return "Not a valid format (use for example: %s)".i18n
+                              .fill([
+                                getCurrencyValueString(
+                                  1234.20,
+                                  turnOffGrouping: true,
+                                ),
+                              ]);
+                        }
+                        return null;
+                      },
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontSize: 32.0,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        hintText: "0",
+                        labelText: "Amount".i18n,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-              child: Container(
-            padding: EdgeInsets.all(10),
-            child: Semantics(
-              identifier: 'amount-field',
-              child: TextFormField(
-                  enabled: !readOnly,
-                  controller: _textEditingController,
-                  autofocus: record!.value == null,
-                  onChanged: (text) {
-                    changeRecordValue(text);
-                  },
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return "Please enter a value".i18n;
-                    }
-                    var numericValue = tryParseCurrencyString(value);
-                    if (numericValue == null) {
-                      return "Not a valid format (use for example: %s)"
-                          .i18n
-                          .fill([
-                        getCurrencyValueString(1234.20, turnOffGrouping: true)
-                      ]);
-                    }
-                    return null;
-                  },
-                  textAlign: TextAlign.end,
-                  style: TextStyle(
-                      fontSize: 32.0,
-                      color: Theme.of(context).colorScheme.onSurface),
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
-                      hintText: "0",
-                      labelText: "Amount".i18n)),
-            ),
-          ))
-        ],
-      ))),
+        ),
+      ),
     );
   }
 
@@ -680,8 +749,9 @@ class EditRecordPageState extends State<EditRecordPage> {
     if (record?.category != null) {
       Set<String> suggestedTags = Set();
       final mostUsedForCategory = (await database.getMostUsedTagsForCategory(
-              record!.category!.name!, record!.category!.categoryType!))
-          .take(4);
+        record!.category!.name!,
+        record!.category!.categoryType!,
+      )).take(4);
       final mostRecentTags = (await database.getRecentlyUsedTags()).take(4);
       suggestedTags.addAll(mostUsedForCategory);
       suggestedTags.addAll(mostRecentTags);
@@ -693,18 +763,23 @@ class EditRecordPageState extends State<EditRecordPage> {
   }
 
   recurrentPeriodHasBeenUpdated(RecurrentRecordPattern toSet) {
-    bool recurrentPeriodHasChanged = toSet.recurrentPeriod!.index !=
+    bool recurrentPeriodHasChanged =
+        toSet.recurrentPeriod!.index !=
         passedReccurrentRecordPattern!.recurrentPeriod!.index;
     // Compare the UTC timestamps
-    bool startingDateHasChanged = toSet.utcDateTime.millisecondsSinceEpoch !=
+    bool startingDateHasChanged =
+        toSet.utcDateTime.millisecondsSinceEpoch !=
         passedReccurrentRecordPattern!.utcDateTime.millisecondsSinceEpoch;
     return recurrentPeriodHasChanged || startingDateHasChanged;
   }
 
   addOrUpdateRecurrentPattern({id}) async {
     // Create a new recurrent pattern from the updated record
-    RecurrentRecordPattern recordPattern =
-        RecurrentRecordPattern.fromRecord(record!, recurrentPeriod!, id: id);
+    RecurrentRecordPattern recordPattern = RecurrentRecordPattern.fromRecord(
+      record!,
+      recurrentPeriod!,
+      id: id,
+    );
     recordPattern.tags =
         _selectedTags; // Assign selected tags to the recurrent pattern
     if (id != null) {
@@ -728,9 +803,8 @@ class EditRecordPageState extends State<EditRecordPage> {
         context,
         MaterialPageRoute(
           fullscreenDialog: true,
-          builder: (context) => TagSelectionDialog(
-            initialSelectedTags: _selectedTags,
-          ),
+          builder: (context) =>
+              TagSelectionDialog(initialSelectedTags: _selectedTags),
         ),
       );
 
@@ -746,53 +820,92 @@ class EditRecordPageState extends State<EditRecordPage> {
 
   AppBar _getAppBar() {
     return AppBar(
-        title: Text(
-          readOnly ? 'View record'.i18n : 'Edit record'.i18n,
+      title: Text(readOnly ? 'View record'.i18n : 'Edit record'.i18n),
+      actions: <Widget>[
+        Visibility(
+          visible: passedRecord == null && !readOnly,
+          child: TextButton(
+            onPressed: () async {
+              var template = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TemplatesList(returnResult: true),
+                ),
+              );
+
+              if (template != null) {
+                setState(() {
+                  selectedTemplate = template as Template;
+                  record!.title = template.title;
+                  record!.category = template.category;
+                  record!.value = template.value;
+                  record!.description = template.description;
+                  _typeAheadController.text = record!.title!;
+                  _descriptionController.text = record!.description ?? "";
+                  _textEditingController.text = getCurrencyValueString(
+                    record!.value!.abs(),
+                    turnOffGrouping: true,
+                  );
+                  changeRecordValue(_textEditingController.text.toLowerCase());
+                });
+              }
+            },
+            child: Text(
+              "Templates",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
         ),
-        actions: <Widget>[
-          Visibility(
-              visible: (widget.passedRecord != null ||
-                      widget.passedReccurrentRecordPattern != null) &&
-                  !readOnly,
-              child: IconButton(
-                  icon: Semantics(
-                      identifier: "delete-button",
-                      child: const Icon(Icons.delete)),
-                  tooltip: 'Delete'.i18n,
-                  onPressed: () async {
-                    AlertDialogBuilder deleteDialog =
-                        AlertDialogBuilder("Critical action".i18n)
-                            .addTrueButtonName("Yes".i18n)
-                            .addFalseButtonName("No".i18n);
-                    if (widget.passedRecord != null) {
-                      deleteDialog = deleteDialog.addSubtitle(
-                          "Do you really want to delete this record?".i18n);
-                    } else {
-                      deleteDialog = deleteDialog.addSubtitle(
-                          "Do you really want to delete this recurrent record?"
-                              .i18n);
-                    }
-                    var continueDelete = await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return deleteDialog.build(context);
-                        });
-                    if (continueDelete) {
-                      if (widget.passedRecord != null) {
-                        await database.deleteRecordById(record!.id);
-                      } else {
-                        String patternId =
-                            widget.passedReccurrentRecordPattern!.id!;
-                        // Use the current UTC time when deleting future records
-                        await database.deleteFutureRecordsByPatternId(
-                            patternId, DateTime.now().toUtc());
-                        await database
-                            .deleteRecurrentRecordPatternById(patternId);
-                      }
-                      Navigator.pop(context);
-                    }
-                  })),
-        ]);
+
+        Visibility(
+          visible:
+              (widget.passedRecord != null ||
+                  widget.passedReccurrentRecordPattern != null) &&
+              !readOnly,
+          child: IconButton(
+            icon: Semantics(
+              identifier: "delete-button",
+              child: const Icon(Icons.delete),
+            ),
+            tooltip: 'Delete'.i18n,
+            onPressed: () async {
+              AlertDialogBuilder deleteDialog = AlertDialogBuilder(
+                "Critical action".i18n,
+              ).addTrueButtonName("Yes".i18n).addFalseButtonName("No".i18n);
+              if (widget.passedRecord != null) {
+                deleteDialog = deleteDialog.addSubtitle(
+                  "Do you really want to delete this record?".i18n,
+                );
+              } else {
+                deleteDialog = deleteDialog.addSubtitle(
+                  "Do you really want to delete this recurrent record?".i18n,
+                );
+              }
+              var continueDelete = await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return deleteDialog.build(context);
+                },
+              );
+              if (continueDelete) {
+                if (widget.passedRecord != null) {
+                  await database.deleteRecordById(record!.id);
+                } else {
+                  String patternId = widget.passedReccurrentRecordPattern!.id!;
+                  // Use the current UTC time when deleting future records
+                  await database.deleteFutureRecordsByPatternId(
+                    patternId,
+                    DateTime.now().toUtc(),
+                  );
+                  await database.deleteRecurrentRecordPatternById(patternId);
+                }
+                Navigator.pop(context);
+              }
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _getForm() {
@@ -801,17 +914,20 @@ class EditRecordPageState extends State<EditRecordPage> {
       child: Column(
         children: [
           Form(
-              key: _formKey,
-              child: Container(
-                child: Column(children: [
+            key: _formKey,
+            child: Container(
+              child: Column(
+                children: [
                   _createAmountCard(),
                   _createTitleCard(),
                   _createCategoryCard(),
                   _createDateAndRepeatCard(),
                   _createTagsSection(),
                   _createAddNoteCard(),
-                ]),
-              ))
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -855,16 +971,17 @@ class EditRecordPageState extends State<EditRecordPage> {
           children: [
             ..._selectedTags.map((tag) {
               return TagChip(
-                  labelText: tag,
-                  isSelected: true,
-                  onSelected: readOnly
-                      ? null
-                      : (selected) {
-                          setState(() {
-                            _selectedTags.remove(tag);
-                            _suggestedTags.add(tag);
-                          });
+                labelText: tag,
+                isSelected: true,
+                onSelected: readOnly
+                    ? null
+                    : (selected) {
+                        setState(() {
+                          _selectedTags.remove(tag);
+                          _suggestedTags.add(tag);
                         });
+                      },
+              );
             }).toList(),
             if (!readOnly)
               TagChip(
@@ -884,8 +1001,10 @@ class EditRecordPageState extends State<EditRecordPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Suggested tags".i18n,
-            style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+        Text(
+          "Suggested tags".i18n,
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        ),
         SizedBox(height: 5),
         Wrap(
           spacing: 8.0,
@@ -908,7 +1027,7 @@ class EditRecordPageState extends State<EditRecordPage> {
                         });
                       },
               );
-            }).toList()
+            }).toList(),
           ],
         ),
       ],
@@ -936,9 +1055,7 @@ class EditRecordPageState extends State<EditRecordPage> {
                       recurrentPatternId =
                           this.passedReccurrentRecordPattern!.id;
                     }
-                    await addOrUpdateRecurrentPattern(
-                      id: recurrentPatternId,
-                    );
+                    await addOrUpdateRecurrentPattern(id: recurrentPatternId);
                   } else {
                     await addOrUpdateRecord();
                   }
@@ -946,7 +1063,9 @@ class EditRecordPageState extends State<EditRecordPage> {
               },
               tooltip: 'Save'.i18n,
               child: Semantics(
-                  identifier: 'save-button', child: const Icon(Icons.save)),
+                identifier: 'save-button',
+                child: const Icon(Icons.save),
+              ),
             ),
     );
   }

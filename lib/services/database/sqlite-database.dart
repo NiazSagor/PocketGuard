@@ -6,6 +6,7 @@ import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/category.dart';
 import 'package:pocket_guard/models/record.dart';
 import 'package:pocket_guard/models/recurrent-record-pattern.dart';
+import 'package:pocket_guard/models/template.dart';
 import 'package:pocket_guard/services/database/sqlite-migration-service.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common/sqflite_logger.dart';
@@ -475,6 +476,29 @@ class SqliteDatabase implements DatabaseInterface {
     });
   }
 
+  @override
+  Future<List<Template>> getTemplates() async {
+    final db = (await database)!;
+    var maps = await db.rawQuery("""
+            SELECT
+                m.*,
+                c.name,
+                c.color,
+                c.category_type,
+                c.icon,
+                c.icon_emoji
+            FROM templates AS m
+            LEFT JOIN categories AS c
+                ON m.category_name = c.name AND m.category_type = c.category_type
+            GROUP BY m.id
+        """);
+    return List.generate(maps.length, (i) {
+      Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
+      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      return Template.fromMap(currentRowMap);
+    });
+  }
+
   Future<Record?> getRecordById(int id) async {
     final db = (await database)!;
     var maps = await db.rawQuery("""
@@ -723,5 +747,19 @@ class SqliteDatabase implements DatabaseInterface {
       where: 'tag_name = ?',
       whereArgs: [tagName],
     );
+  }
+
+  @override
+  Future<int> addTemplate(Template? template) async {
+    final db = (await database)!;
+    if (await getCategory(
+          template!.category!.name,
+          template.category!.categoryType!,
+        ) ==
+        null) {
+      await addCategory(template.category);
+    }
+    int templateId = await db.insert("templates", template.toMap());
+    return templateId;
   }
 }

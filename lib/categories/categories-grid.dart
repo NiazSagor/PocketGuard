@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocket_guard/components/category_icon_circle.dart';
 import 'package:pocket_guard/models/category.dart';
 import 'package:pocket_guard/records/edit-record-page.dart';
+import 'package:pocket_guard/template/template-page.dart';
 import 'package:reorderable_grid/reorderable_grid.dart';
 
 import '../i18n.dart';
@@ -9,11 +10,13 @@ import '../i18n.dart';
 class CategoriesGrid extends StatefulWidget {
   final List<Category?> categories;
   final bool? goToEditMovementPage;
+  final bool? goToTemplateMovementPage;
   final bool enableManualSorting;
   final Function(List<Category?>) onChangeOrder;
 
   CategoriesGrid(this.categories,
       {this.goToEditMovementPage,
+      this.goToTemplateMovementPage,
       required this.enableManualSorting,
       required this.onChangeOrder});
 
@@ -67,6 +70,15 @@ class CategoriesGridState extends State<CategoriesGrid> {
                 MaterialPageRoute(
                   builder: (context) =>
                       EditRecordPage(passedCategory: category),
+                ),
+              );
+            } else if (widget.goToTemplateMovementPage != null &&
+                widget.goToTemplateMovementPage!) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      TemplatePage(passedCategory: category),
                 ),
               );
             } else {
