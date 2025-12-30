@@ -31,7 +31,7 @@ abstract class DatabaseInterface {
   Future<int?> updateRecordById(int? recordId, Record? newRecord);
   Future<DateTime?> getDateTimeFirstRecord();
   Future<List<Record?>> getAllRecords();
-  Future<List<Template?>> getTemplates();
+  Future<List<Template?>> getTemplates(CategoryType? categoryType);
   Future<List<Record?>> getAllRecordsInInterval(DateTime? from, DateTime? to);
   Future<Record?> getMatchingRecord(Record? record);
   Future<void> deleteFutureRecordsByPatternId(
@@ -45,6 +45,8 @@ abstract class DatabaseInterface {
       String categoryName, CategoryType categoryType);
   Future<List<Map<String, dynamic>>> getAggregatedRecordsByTagInInterval(
       DateTime? from, DateTime? to);
+
+  Future<void> deleteTemplateById(int id);
 
   // New methods for record tag associations
   Future<List<RecordTagAssociation>> getAllRecordTagAssociations();

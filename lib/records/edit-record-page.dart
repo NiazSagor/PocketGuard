@@ -829,7 +829,10 @@ class EditRecordPageState extends State<EditRecordPage> {
               var template = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => TemplatesList(returnResult: true),
+                  builder: (context) => TemplatesList(
+                    returnResult: true,
+                    passedCategoryType: record!.category!.categoryType,
+                  ),
                 ),
               );
 
