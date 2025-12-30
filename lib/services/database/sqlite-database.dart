@@ -767,4 +767,10 @@ class SqliteDatabase implements DatabaseInterface {
     int templateId = await db.insert("templates", template.toMap());
     return templateId;
   }
+
+  @override
+  Future<void> deleteTemplateById(int id) async {
+    final db = (await database)!;
+    await db.delete("templates", where: "id = ?", whereArgs: [id]);
+  }
 }

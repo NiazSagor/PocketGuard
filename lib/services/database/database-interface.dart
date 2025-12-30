@@ -46,6 +46,8 @@ abstract class DatabaseInterface {
   Future<List<Map<String, dynamic>>> getAggregatedRecordsByTagInInterval(
       DateTime? from, DateTime? to);
 
+  Future<void> deleteTemplateById(int id);
+
   // New methods for record tag associations
   Future<List<RecordTagAssociation>> getAllRecordTagAssociations();
   Future<void> addRecordTagAssociationsInBatch(
