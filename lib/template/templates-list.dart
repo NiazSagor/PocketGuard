@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocket_guard/categories/categories-tab-page-view.dart';
 import 'package:pocket_guard/components/category_icon_circle.dart';
+import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/template.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
 import 'package:pocket_guard/services/service-config.dart';
@@ -12,7 +13,14 @@ class TemplatesList extends StatefulWidget {
 
   final bool? returnResult;
 
-  const TemplatesList({super.key, this.callback, this.returnResult});
+  final CategoryType? passedCategoryType;
+
+  const TemplatesList({
+    super.key,
+    this.callback,
+    this.returnResult,
+    this.passedCategoryType,
+  });
 
   @override
   State<TemplatesList> createState() => _TemplatesListState();
@@ -26,26 +34,30 @@ class _TemplatesListState extends State<TemplatesList> {
   @override
   void initState() {
     super.initState();
-    database.getTemplates().then(
-      (templates) => {
-        setState(() {
-          _templates = templates;
-        }),
-      },
-      onError: (error) => _templates = [],
-    );
+    database
+        .getTemplates(widget.passedCategoryType)
+        .then(
+          (templates) => {
+            setState(() {
+              _templates = templates;
+            }),
+          },
+          onError: (error) => _templates = [],
+        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isExpense = widget.passedCategoryType == CategoryType.expense;
+    final title = isExpense ? "Expense Templates" : "Income Templates";
     return Scaffold(
-      appBar: AppBar(title: Text("Templates".i18n)),
+      appBar: AppBar(title: Text(title.i18n)),
       body: Container(
         margin: EdgeInsets.all(15),
         child: _templates!.isEmpty
             ? Center(
-          child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Image.asset('assets/images/no_entry_2.png', width: 200),
@@ -56,8 +68,8 @@ class _TemplatesListState extends State<TemplatesList> {
                     ),
                   ],
                 ),
-            )
-            : _buildCategories(),
+              )
+            : _buildTemplates(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -78,7 +90,7 @@ class _TemplatesListState extends State<TemplatesList> {
     );
   }
 
-  Widget _buildCategories() {
+  Widget _buildTemplates() {
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(thickness: 0.5),
       itemCount: _templates!.length,

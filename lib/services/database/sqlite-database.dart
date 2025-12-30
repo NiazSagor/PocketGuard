@@ -477,7 +477,7 @@ class SqliteDatabase implements DatabaseInterface {
   }
 
   @override
-  Future<List<Template>> getTemplates() async {
+  Future<List<Template>> getTemplates(CategoryType? categoryType) async {
     final db = (await database)!;
     var maps = await db.rawQuery("""
             SELECT
@@ -492,11 +492,16 @@ class SqliteDatabase implements DatabaseInterface {
                 ON m.category_name = c.name AND m.category_type = c.category_type
             GROUP BY m.id
         """);
-    return List.generate(maps.length, (i) {
+    final allTemplates =  List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
       currentRowMap["category"] = Category.fromMap(currentRowMap);
       return Template.fromMap(currentRowMap);
     });
+
+    if (categoryType != null) {
+      return allTemplates.where((template) => template.category!.categoryType == categoryType).toList();
+    }
+    return allTemplates;
   }
 
   Future<Record?> getRecordById(int id) async {

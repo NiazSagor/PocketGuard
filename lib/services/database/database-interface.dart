@@ -31,7 +31,7 @@ abstract class DatabaseInterface {
   Future<int?> updateRecordById(int? recordId, Record? newRecord);
   Future<DateTime?> getDateTimeFirstRecord();
   Future<List<Record?>> getAllRecords();
-  Future<List<Template?>> getTemplates();
+  Future<List<Template?>> getTemplates(CategoryType? categoryType);
   Future<List<Record?>> getAllRecordsInInterval(DateTime? from, DateTime? to);
   Future<Record?> getMatchingRecord(Record? record);
   Future<void> deleteFutureRecordsByPatternId(
