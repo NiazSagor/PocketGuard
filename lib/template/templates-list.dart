@@ -115,7 +115,6 @@ class _TemplatesListState extends State<TemplatesList> {
         if (widget.returnResult != null && widget.returnResult == true) {
           Navigator.pop(context, template);
         }
-        // goto edit template page
         if (widget.callback != null) widget.callback!();
       },
       onLongPress: () async {
