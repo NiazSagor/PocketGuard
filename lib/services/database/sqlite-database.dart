@@ -773,4 +773,16 @@ class SqliteDatabase implements DatabaseInterface {
     final db = (await database)!;
     await db.delete("templates", where: "id = ?", whereArgs: [id]);
   }
+
+  @override
+  Future<int> updateTemplate(Template? template) async {
+    final db = (await database)!;
+    var templateMap = template!.toMap();
+    if (templateMap['id'] == null) {
+      templateMap['id'] = template.id;
+    }
+    int updatedRows = await db
+        .update("templates", templateMap, where: "id = ?", whereArgs: [template.id]);
+    return updatedRows;
+  }
 }

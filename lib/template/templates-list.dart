@@ -6,6 +6,7 @@ import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/template.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
 import 'package:pocket_guard/services/service-config.dart';
+import 'package:pocket_guard/template/template-page.dart';
 
 import '../i18n.dart';
 
@@ -39,9 +40,7 @@ class _TemplatesListState extends State<TemplatesList> {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
+  void _refreshTemplates() async {
     database
         .getTemplates(widget.passedCategoryType)
         .then(
@@ -55,9 +54,20 @@ class _TemplatesListState extends State<TemplatesList> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _refreshTemplates();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isExpense = widget.passedCategoryType == CategoryType.expense;
-    final title = isExpense ? "Expense Templates" : "Income Templates";
+    var title = "";
+    if (widget.passedCategoryType == null) {
+      title = "Templates";
+    } else {
+      final isExpense = widget.passedCategoryType == CategoryType.expense;
+      title = isExpense ? "Expense Templates" : "Income Templates";
+    }
     return Scaffold(
       appBar: AppBar(title: Text(title.i18n)),
       body: Container(
@@ -114,6 +124,18 @@ class _TemplatesListState extends State<TemplatesList> {
       onTap: () async {
         if (widget.returnResult != null && widget.returnResult == true) {
           Navigator.pop(context, template);
+        }
+
+        if (widget.passedCategoryType == null) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TemplatePage(passedTemplate: template),
+            ),
+          );
+          setState(() {
+            _refreshTemplates();
+          });
         }
         if (widget.callback != null) widget.callback!();
       },

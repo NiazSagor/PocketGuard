@@ -9,6 +9,7 @@ import 'package:pocket_guard/settings/backup-restore-dialogs.dart';
 import 'package:pocket_guard/settings/feedback-page.dart';
 import 'package:pocket_guard/settings/settings-item.dart';
 import 'package:pocket_guard/tags/tags-page-view.dart';
+import 'package:pocket_guard/template/templates-list.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../i18n.dart';
@@ -69,6 +70,13 @@ class TabSettings extends StatelessWidget {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => TagsPageView()),
+    );
+  }
+
+  goToTemplatesPage(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TemplatesList()),
     );
   }
 
@@ -136,6 +144,15 @@ class TabSettings extends StatelessWidget {
               title: 'Tags'.i18n,
               subtitle: "Manage your existing tags".i18n,
               onPressed: () async => await goToTagsPage(context)),
+          SettingsItem(
+              icon: Icon(
+                Icons.layers,
+                color: Colors.white,
+              ),
+              iconBackgroundColor: Colors.amber.shade600,
+              title: 'Templates'.i18n,
+              subtitle: "Manage your existing templates".i18n,
+              onPressed: () async => await goToTemplatesPage(context)),
           Divider(),
           SettingsItem(
               icon: Icon(

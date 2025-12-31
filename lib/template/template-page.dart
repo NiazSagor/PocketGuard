@@ -13,8 +13,9 @@ import '../i18n.dart';
 
 class TemplatePage extends StatefulWidget {
   final Category? passedCategory;
+  final Template? passedTemplate;
 
-  const TemplatePage({super.key, this.passedCategory});
+  const TemplatePage({super.key, this.passedCategory, this.passedTemplate});
 
   @override
   State<TemplatePage> createState() => _TemplatePageState(this.passedCategory);
@@ -24,6 +25,7 @@ class _TemplatePageState extends State<TemplatePage> {
   DatabaseInterface database = ServiceConfig.database;
   final TextEditingController titleEditingController = TextEditingController();
   final TextEditingController amountEditingController = TextEditingController();
+  final TextEditingController noteEditingController = TextEditingController();
   Category? passedCategory;
   late Template? template;
   DateTime? lastCharInsertedMillisecond;
@@ -39,6 +41,18 @@ class _TemplatePageState extends State<TemplatePage> {
     bool overwriteCommaValue = getOverwriteCommaValue();
 
     template = Template(null, null, passedCategory);
+
+    if (widget.passedTemplate != null) {
+      template = widget.passedTemplate;
+      titleEditingController.text = template!.title!;
+      noteEditingController.text = template!.description != null
+          ? template!.description!
+          : "";
+      amountEditingController.text = getCurrencyValueString(
+        template!.value!.abs(),
+        turnOffGrouping: true,
+      );
+    }
 
     amountEditingController.addListener(() {
       lastCharInsertedMillisecond = DateTime.now();
@@ -72,19 +86,24 @@ class _TemplatePageState extends State<TemplatePage> {
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.passedTemplate != null
+        ? "Edit Template"
+        : "Add Template";
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Template')),
+      appBar: AppBar(title: Text(title.i18n)),
       resizeToAvoidBottomInset: false,
       body: SingleChildScrollView(child: _getForm()),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           if (_formKey.currentState!.validate()) {
-            await addOrUpdateRecord();
+            await addOrUpdateTemplate();
           }
         },
         tooltip: 'Save'.i18n,
         child: Semantics(
-            identifier: 'save-button', child: const Icon(Icons.save)),
+          identifier: 'save-button',
+          child: const Icon(Icons.save),
+        ),
       ),
     );
   }
@@ -214,6 +233,7 @@ class _TemplatePageState extends State<TemplatePage> {
         child: Semantics(
           identifier: 'note-field',
           child: TextFormField(
+            controller: noteEditingController,
             onChanged: (text) {
               setState(() {
                 template!.description = text;
@@ -309,11 +329,17 @@ class _TemplatePageState extends State<TemplatePage> {
     );
   }
 
-  addOrUpdateRecord() async {
+  addOrUpdateTemplate() async {
     if (template!.id == null) {
       await database.addTemplate(template);
+    } else {
+      await database.updateTemplate(template);
     }
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    if (widget.passedTemplate != null) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   void changeRecordValue(String text) {

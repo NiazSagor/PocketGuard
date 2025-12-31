@@ -27,6 +27,7 @@ abstract class DatabaseInterface {
   Future<void> deleteRecordById(int? id);
   Future<int> addRecord(Record? record);
   Future<int> addTemplate(Template? template);
+  Future<int> updateTemplate(Template? template);
   Future<void> addRecordsInBatch(List<Record?> records);
   Future<int?> updateRecordById(int? recordId, Record? newRecord);
   Future<DateTime?> getDateTimeFirstRecord();
