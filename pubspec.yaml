@@ -69,6 +69,7 @@ dependencies:
   reorderable_grid: ^1.0.10
   flutter_timezone: ^4.1.1
   local_auth_platform_interface: ^1.0.10
+  fl_chart: ^1.1.1
 
 dev_dependencies:
   flutter_test:

@@ -133,9 +133,8 @@ class TabRecordsState extends State<TabRecords> {
 
   Widget _buildSummarySection() {
     return SliverToBoxAdapter(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(6, 10, 6, 5),
-        height: 100,
+      child: Padding( // Use Padding instead of Container with fixed height
+        padding: const EdgeInsets.fromLTRB(6, 10, 6, 5),
         child: DaysSummaryBox(
             _controller.overviewRecords ?? _controller.filteredRecords),
       ),
