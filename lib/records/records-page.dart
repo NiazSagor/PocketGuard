@@ -90,12 +90,39 @@ class TabRecordsState extends State<TabRecords> {
 
       if (_controller.filteredRecords.isNotEmpty)
         SliverToBoxAdapter(
-          child: TopSpendingCarousel(
-            passedRecords:
-                _controller.overviewRecords ?? _controller.filteredRecords,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+            child: Text(
+              "Top Spending".i18n,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
           ),
         ),
-      const SliverToBoxAdapter(child: Divider(indent: 50, endIndent: 50)),
+
+      SliverToBoxAdapter(
+        child: TopSpendingCarousel(
+          passedRecords:
+              _controller.overviewRecords ?? _controller.filteredRecords,
+        ),
+      ),
+
+      if (_controller.filteredRecords.isNotEmpty)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+            child: Text(
+              "Daily Breakdown".i18n,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+
       if (_controller.filteredRecords.isEmpty) _buildEmptyState(),
       RecordsDayList(
         _controller.filteredRecords,

@@ -17,17 +17,6 @@ class TopSpendingCarousel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            "Top Spending".i18n,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              letterSpacing: 0.1,
-            ),
-          ),
-        ),
         SizedBox(height: 8),
         SizedBox(
           height: 50,
