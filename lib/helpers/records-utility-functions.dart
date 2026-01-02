@@ -5,10 +5,13 @@ import 'package:i18n_extension/default.i18n.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/number_symbols.dart';
 import 'package:intl/number_symbols_data.dart';
-import 'package:pocket_guard/models/records-per-day.dart';
+import 'package:pocket_guard/models/category-type.dart';
+import 'package:pocket_guard/models/category.dart';
 import 'package:pocket_guard/models/record.dart';
+import 'package:pocket_guard/models/records-per-day.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
 import 'package:pocket_guard/settings/constants/overview-time-interval.dart';
+
 import '../services/service-config.dart';
 import '../settings/constants/homepage-time-interval.dart';
 import '../settings/constants/preferences-keys.dart';
@@ -24,7 +27,10 @@ List<RecordsPerDay> groupRecordsByDay(List<Record?> records) {
   for (var record in records) {
     if (record != null) {
       DateTime dateKey = DateTime(
-          record.dateTime.year, record.dateTime.month, record.dateTime.day);
+        record.dateTime.year,
+        record.dateTime.month,
+        record.dateTime.day,
+      );
 
       if (!movementsGroups.containsKey(dateKey)) {
         movementsGroups[dateKey] = [];
@@ -50,24 +56,32 @@ List<RecordsPerDay> groupRecordsByDay(List<Record?> records) {
 
 String getGroupingSeparator() {
   return PreferencesUtils.getOrDefault<String>(
-      ServiceConfig.sharedPreferences!, PreferencesKeys.groupSeparator)!;
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.groupSeparator,
+  )!;
 }
 
 String getDecimalSeparator() {
   return PreferencesUtils.getOrDefault<String>(
-      ServiceConfig.sharedPreferences!, PreferencesKeys.decimalSeparator)!;
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.decimalSeparator,
+  )!;
 }
 
 bool getOverwriteDotValue() {
   if (getDecimalSeparator() == ".") return false;
-  return PreferencesUtils.getOrDefault<bool>(ServiceConfig.sharedPreferences!,
-      PreferencesKeys.overwriteDotValueWithComma)!;
+  return PreferencesUtils.getOrDefault<bool>(
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.overwriteDotValueWithComma,
+  )!;
 }
 
 bool getOverwriteCommaValue() {
   if (getDecimalSeparator() == ",") return false;
-  return PreferencesUtils.getOrDefault<bool>(ServiceConfig.sharedPreferences!,
-      PreferencesKeys.overwriteCommaValueWithDot)!;
+  return PreferencesUtils.getOrDefault<bool>(
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.overwriteCommaValueWithDot,
+  )!;
 }
 
 Locale getCurrencyLocale() {
@@ -76,22 +90,31 @@ Locale getCurrencyLocale() {
 
 bool usesWesternArabicNumerals(Locale locale) {
   NumberFormat numberFormat = new NumberFormat.currency(
-      locale: locale.toString(), symbol: "", decimalDigits: 2);
+    locale: locale.toString(),
+    symbol: "",
+    decimalDigits: 2,
+  );
 
   numberFormat.turnOffGrouping();
 
   return numberFormat.format(1234).contains("1234");
 }
 
-NumberFormat getNumberFormatWithCustomizations(
-    {turnOffGrouping = false, locale}) {
+NumberFormat getNumberFormatWithCustomizations({
+  turnOffGrouping = false,
+  locale,
+}) {
   NumberFormat? numberFormat;
 
   String? userDefinedGroupSeparator = PreferencesUtils.getOrDefault<String?>(
-      ServiceConfig.sharedPreferences!, PreferencesKeys.groupSeparator);
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.groupSeparator,
+  );
 
   int decimalDigits = PreferencesUtils.getOrDefault<int>(
-      ServiceConfig.sharedPreferences!, PreferencesKeys.numberDecimalDigits)!;
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.numberDecimalDigits,
+  )!;
 
   try {
     if (locale == null) {
@@ -99,28 +122,35 @@ NumberFormat getNumberFormatWithCustomizations(
     }
 
     NumberFormat referenceNumberFormat = new NumberFormat.currency(
-        locale: locale.toString(), symbol: "", decimalDigits: decimalDigits);
+      locale: locale.toString(),
+      symbol: "",
+      decimalDigits: decimalDigits,
+    );
 
     numberFormatSymbols['custom_locale'] = new NumberSymbols(
-        NAME: "c",
-        DECIMAL_SEP: getDecimalSeparator(),
-        GROUP_SEP: getGroupingSeparator(),
-        PERCENT: referenceNumberFormat.symbols.PERCENT,
-        ZERO_DIGIT: referenceNumberFormat.symbols.ZERO_DIGIT,
-        PLUS_SIGN: referenceNumberFormat.symbols.PLUS_SIGN,
-        MINUS_SIGN: referenceNumberFormat.symbols.MINUS_SIGN,
-        EXP_SYMBOL: referenceNumberFormat.symbols.EXP_SYMBOL,
-        PERMILL: referenceNumberFormat.symbols.PERMILL,
-        INFINITY: referenceNumberFormat.symbols.INFINITY,
-        NAN: referenceNumberFormat.symbols.NAN,
-        DECIMAL_PATTERN: referenceNumberFormat.symbols.DECIMAL_PATTERN,
-        SCIENTIFIC_PATTERN: referenceNumberFormat.symbols.SCIENTIFIC_PATTERN,
-        PERCENT_PATTERN: referenceNumberFormat.symbols.PERCENT_PATTERN,
-        CURRENCY_PATTERN: referenceNumberFormat.symbols.CURRENCY_PATTERN,
-        DEF_CURRENCY_CODE: referenceNumberFormat.symbols.DEF_CURRENCY_CODE);
+      NAME: "c",
+      DECIMAL_SEP: getDecimalSeparator(),
+      GROUP_SEP: getGroupingSeparator(),
+      PERCENT: referenceNumberFormat.symbols.PERCENT,
+      ZERO_DIGIT: referenceNumberFormat.symbols.ZERO_DIGIT,
+      PLUS_SIGN: referenceNumberFormat.symbols.PLUS_SIGN,
+      MINUS_SIGN: referenceNumberFormat.symbols.MINUS_SIGN,
+      EXP_SYMBOL: referenceNumberFormat.symbols.EXP_SYMBOL,
+      PERMILL: referenceNumberFormat.symbols.PERMILL,
+      INFINITY: referenceNumberFormat.symbols.INFINITY,
+      NAN: referenceNumberFormat.symbols.NAN,
+      DECIMAL_PATTERN: referenceNumberFormat.symbols.DECIMAL_PATTERN,
+      SCIENTIFIC_PATTERN: referenceNumberFormat.symbols.SCIENTIFIC_PATTERN,
+      PERCENT_PATTERN: referenceNumberFormat.symbols.PERCENT_PATTERN,
+      CURRENCY_PATTERN: referenceNumberFormat.symbols.CURRENCY_PATTERN,
+      DEF_CURRENCY_CODE: referenceNumberFormat.symbols.DEF_CURRENCY_CODE,
+    );
 
     numberFormat = new NumberFormat.currency(
-        locale: "custom_locale", symbol: "", decimalDigits: decimalDigits);
+      locale: "custom_locale",
+      symbol: "",
+      decimalDigits: decimalDigits,
+    );
 
     // Copy over some properties
     numberFormat.maximumIntegerDigits =
@@ -142,10 +172,14 @@ NumberFormat getNumberFormatWithCustomizations(
         referenceNumberFormat.minimumSignificantDigits;
   } on Exception catch (_) {
     numberFormat = new NumberFormat.currency(
-        locale: "en_US", symbol: "", decimalDigits: decimalDigits);
+      locale: "en_US",
+      symbol: "",
+      decimalDigits: decimalDigits,
+    );
   }
 
-  bool mustRemoveGrouping = (userDefinedGroupSeparator != null &&
+  bool mustRemoveGrouping =
+      (userDefinedGroupSeparator != null &&
           userDefinedGroupSeparator.isEmpty) ||
       turnOffGrouping;
 
@@ -158,8 +192,9 @@ NumberFormat getNumberFormatWithCustomizations(
 
 void setNumberFormatCache() {
   Locale toSet = ServiceConfig.currencyLocale!;
-  ServiceConfig.currencyNumberFormat =
-      getNumberFormatWithCustomizations(locale: toSet);
+  ServiceConfig.currencyNumberFormat = getNumberFormatWithCustomizations(
+    locale: toSet,
+  );
   ServiceConfig.currencyNumberFormatWithoutGrouping =
       getNumberFormatWithCustomizations(locale: toSet, turnOffGrouping: true);
 }
@@ -207,13 +242,16 @@ String stripUnknownPatternCharacters(String toParse) {
   String groupingSeparator = getGroupingSeparator();
   // Use a regular expression to keep only digits,
   // the decimal separator, and the grouping separator
-  String pattern = '[0-9' +
+  String pattern =
+      '[0-9' +
       RegExp.escape(decimalSeparator) +
       RegExp.escape(groupingSeparator) +
       ']';
   RegExp regex = RegExp(pattern);
-  String result =
-      toParse.split('').where((char) => regex.hasMatch(char)).join();
+  String result = toParse
+      .split('')
+      .where((char) => regex.hasMatch(char))
+      .join();
   return result;
 }
 
@@ -224,11 +262,31 @@ AssetImage getBackgroundImage() {
     try {
       var now = DateTime.now();
       String month = now.month.toString();
-      return AssetImage('assets/images/bkg_' + month + '.jpg');
+      return AssetImage(
+        'assets/images/${getCurrentSeason()}'
+        '.png',
+      );
     } on Exception catch (_) {
       return AssetImage('assets/images/background.jpg');
     }
   }
+}
+
+String getCurrentSeason() {
+  final now = DateTime.now();
+  final month = now.month;
+
+  if (month >= 4 && month <= 8) {
+    return "summer";
+  } else if (month >= 9 && month <= 11) {
+    return "autumn";
+  } else if (month == 12 || month == 1) {
+    return "winter";
+  } else if (month == 2 || month == 3) {
+    return "spring";
+  }
+
+  return "summer";
 }
 
 Future<List<Record?>> getAllRecords(DatabaseInterface database) async {
@@ -240,12 +298,18 @@ Future<DateTime?> getDateTimeFirstRecord(DatabaseInterface database) async {
 }
 
 Future<List<Record?>> getRecordsByInterval(
-    DatabaseInterface database, DateTime? _from, DateTime? _to) async {
+  DatabaseInterface database,
+  DateTime? _from,
+  DateTime? _to,
+) async {
   return await database.getAllRecordsInInterval(_from, _to);
 }
 
 Future<List<Record?>> getRecordsByMonth(
-    DatabaseInterface database, int year, int month) async {
+  DatabaseInterface database,
+  int year,
+  int month,
+) async {
   /// Returns the list of movements of a given month identified by
   /// :year and :month integers.
   DateTime _from = new DateTime(year, month, 1);
@@ -254,7 +318,9 @@ Future<List<Record?>> getRecordsByMonth(
 }
 
 Future<List<Record?>> getRecordsByYear(
-    DatabaseInterface database, int year) async {
+  DatabaseInterface database,
+  int year,
+) async {
   /// Returns the list of movements of a given year identified by
   /// :year integer.
   DateTime _from = new DateTime(year, 1, 1);
@@ -264,14 +330,17 @@ Future<List<Record?>> getRecordsByYear(
 
 HomepageTimeInterval getHomepageTimeIntervalEnumSetting() {
   var userDefinedHomepageIntervalIndex = PreferencesUtils.getOrDefault<int>(
-      ServiceConfig.sharedPreferences!, PreferencesKeys.homepageTimeInterval)!;
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.homepageTimeInterval,
+  )!;
   return HomepageTimeInterval.values[userDefinedHomepageIntervalIndex];
 }
 
 OverviewTimeInterval getHomepageOverviewWidgetTimeIntervalEnumSetting() {
   var userDefinedHomepageIntervalIndex = PreferencesUtils.getOrDefault<int>(
-      ServiceConfig.sharedPreferences!,
-      PreferencesKeys.homepageOverviewWidgetTimeInterval)!;
+    ServiceConfig.sharedPreferences!,
+    PreferencesKeys.homepageOverviewWidgetTimeInterval,
+  )!;
   return OverviewTimeInterval.values[userDefinedHomepageIntervalIndex];
 }
 
@@ -288,7 +357,9 @@ String getHeaderFromHomepageTimeInterval(HomepageTimeInterval timeInterval) {
 }
 
 Future<List<DateTime>> getTimeIntervalFromHomepageTimeInterval(
-    DatabaseInterface database, HomepageTimeInterval timeInterval) async {
+  DatabaseInterface database,
+  HomepageTimeInterval timeInterval,
+) async {
   DateTime _now = DateTime.now();
   switch (timeInterval) {
     case HomepageTimeInterval.CurrentMonth:
@@ -311,7 +382,8 @@ Future<List<DateTime>> getTimeIntervalFromHomepageTimeInterval(
 }
 
 HomepageTimeInterval mapOverviewTimeIntervalToHomepageTimeInterval(
-    OverviewTimeInterval overviewTimeInterval) {
+  OverviewTimeInterval overviewTimeInterval,
+) {
   if (overviewTimeInterval == OverviewTimeInterval.FixAllRecords) {
     return HomepageTimeInterval.All;
   }
@@ -325,7 +397,9 @@ HomepageTimeInterval mapOverviewTimeIntervalToHomepageTimeInterval(
 }
 
 Future<List<Record?>> getRecordsByHomepageTimeInterval(
-    DatabaseInterface database, HomepageTimeInterval timeInterval) async {
+  DatabaseInterface database,
+  HomepageTimeInterval timeInterval,
+) async {
   DateTime _now = DateTime.now();
   switch (timeInterval) {
     case HomepageTimeInterval.CurrentMonth:
@@ -335,4 +409,28 @@ Future<List<Record?>> getRecordsByHomepageTimeInterval(
     case HomepageTimeInterval.All:
       return await getAllRecords(database);
   }
+}
+
+Map<Category, double> getTopCategories(List<Record?> records) {
+  Map<Category, double> categoryMap = {};
+
+  for (var record in records) {
+    // Check if it's an expense (categoryType != 0)
+    if (record != null &&
+        record.category != null &&
+        record.category?.categoryType != CategoryType.income) {
+      Category cat = record.category!;
+      double val = record.value?.abs() ?? 0.0;
+
+      // Update the sum for this specific Category object
+      categoryMap[cat] = (categoryMap[cat] ?? 0.0) + val;
+    }
+  }
+
+  // Sort entries by the accumulated double value (descending)
+  var sortedEntries = categoryMap.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+
+  // Return the top 5 Category-Amount pairs
+  return Map.fromEntries(sortedEntries.take(5));
 }
