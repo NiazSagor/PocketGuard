@@ -124,7 +124,10 @@ class TabCategoriesState extends State<TabCategories>
                 if (_categoryProvider.isLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                return CategoriesList(_categoryProvider.expenseCategories);
+                return CategoriesList(
+                  _categoryProvider.expenseCategories,
+                  callback: refreshCategories,
+                );
               },
             ),
 
@@ -134,7 +137,10 @@ class TabCategoriesState extends State<TabCategories>
                 if (_categoryProvider.isLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                return CategoriesList(_categoryProvider.incomeCategories);
+                return CategoriesList(
+                  _categoryProvider.incomeCategories,
+                  callback: refreshCategories,
+                );
               },
             ),
           ],
