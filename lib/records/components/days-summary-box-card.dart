@@ -1,10 +1,8 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:pocket_guard/helpers/mini-chart-helper.dart';
 import 'package:pocket_guard/helpers/records-utility-functions.dart';
-import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/record.dart';
 import 'package:pocket_guard/records/components/mini_balance_chart.dart';
+import 'package:pocket_guard/records/notifiers/chart_provider.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
 import 'package:pocket_guard/services/service-config.dart';
 
@@ -25,85 +23,63 @@ class DaysSummaryBox extends StatefulWidget {
 
 class DaysSummaryBoxState extends State<DaysSummaryBox> {
   DatabaseInterface database = ServiceConfig.database;
-  List<FlSpot> _cachedSpots = [];
-  bool _isLoadingChart = false;
   final _biggerFont = const TextStyle(fontSize: 18.0);
   final _subtitleFont = const TextStyle(fontSize: 13.0);
+  late ChartProvider _chartProvider;
 
-  late bool _isProfitable = true;
-
-  double totalIncome() {
-    return widget.records
-        .where(
-          (record) => record!.category!.categoryType == CategoryType.income,
-        )
-        .fold(0.0, (previousValue, record) => previousValue + record!.value!);
-  }
-
-  double totalExpenses() {
-    return widget.records
-        .where(
-          (record) => record!.category!.categoryType == CategoryType.expense,
-        )
-        .fold(0.0, (previousValue, record) => previousValue + record!.value!);
-  }
-
-  double totalBalance() {
-    return totalIncome() + totalExpenses();
-  }
-
-  Future<double> calculateOpeningBalance(DateTime currentMonth) async {
-    final DateTime startOfTime = DateTime(1900);
-    DateTime startOfThisMonth = DateTime(
-      currentMonth.year,
-      currentMonth.month,
-      1,
-    );
-
-    // Fetch all records before this month
-    List<Record?> previousRecords = await database.getAllRecordsInInterval(
-      startOfTime,
-      startOfThisMonth,
-    );
-
-    double balance = 0.0;
-
-    for (var record in previousRecords) {
-      if (record != null) {
-        balance += record.value ?? 0.0;
-      }
-    }
-
-    return balance;
+  @override
+  void initState() {
+    super.initState();
+    _chartProvider = ChartProvider(database: database);
+    _chartProvider.prepareChart(widget.records);
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 1,
-      //color: Colors.white,
-      //surfaceTintColor: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(6.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildSummaryRow(),
+        child: ListenableBuilder(
+          listenable: _chartProvider,
+          builder: (context, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildSummaryRow(
+                  _chartProvider.totalIncome,
+                  _chartProvider.totalExpense,
+                ),
 
-            if (widget.records.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              _buildMiniChart(),
-            ],
+                if (_chartProvider.isLoading)
+                  const SizedBox(
+                    height: 100,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_chartProvider.spots.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  MiniBalanceChart(
+                    spots: _chartProvider.spots,
+                    isPositiveColor: _chartProvider.isProfitable
+                        ? Colors.green
+                        : Colors.red,
+                  ),
+                ],
 
-            const SizedBox(height: 16),
-            _buildIncomeExpenseProgressBar(totalIncome(), totalExpenses()),
-          ],
+                const SizedBox(height: 16),
+                _buildIncomeExpenseProgressBar(
+                  _chartProvider.totalIncome,
+                  _chartProvider.totalExpense,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildSummaryRow() {
+  Widget _buildSummaryRow(double totalIncome, double totalExpenses) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
@@ -120,7 +96,7 @@ class DaysSummaryBoxState extends State<DaysSummaryBox> {
               ),
               SizedBox(height: 5), // spacing
               Text(
-                getCurrencyValueString(totalIncome()),
+                getCurrencyValueString(totalIncome),
                 style: _biggerFont,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -141,7 +117,7 @@ class DaysSummaryBoxState extends State<DaysSummaryBox> {
               ),
               SizedBox(height: 5), // spacing
               Text(
-                getCurrencyValueString(totalExpenses()),
+                getCurrencyValueString(totalExpenses),
                 style: _biggerFont,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -162,7 +138,7 @@ class DaysSummaryBoxState extends State<DaysSummaryBox> {
               ),
               SizedBox(height: 5), // spacing
               Text(
-                getCurrencyValueString(totalBalance()),
+                getCurrencyValueString(totalExpenses + totalIncome),
                 style: _biggerFont,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -183,45 +159,11 @@ class DaysSummaryBoxState extends State<DaysSummaryBox> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _prepareChart();
-  }
-
-  @override
   void didUpdateWidget(DaysSummaryBox oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.records != widget.records) {
-      _prepareChart();
+      _chartProvider.prepareChart(widget.records);
     }
-  }
-
-  Future<void> _prepareChart() async {
-    setState(() => _isLoadingChart = true);
-
-    final openingBalance = await calculateOpeningBalance(DateTime.now());
-    final spots = calculateTrendSpots(widget.records, openingBalance);
-
-    bool isProfitable = true;
-    if (spots.isNotEmpty) {
-      isProfitable = spots.last.y >= openingBalance;
-    }
-
-    setState(() {
-      _cachedSpots = spots;
-      _isLoadingChart = false;
-      _isProfitable = isProfitable;
-    });
-  }
-
-  Widget _buildMiniChart() {
-    if (_isLoadingChart) return const SizedBox(height: 60);
-    if (_cachedSpots.isEmpty) return const SizedBox.shrink();
-
-    return MiniBalanceChart(
-      spots: _cachedSpots,
-      isPositiveColor: _isProfitable ? Colors.green : Colors.red,
-    );
   }
 
   Widget _buildIncomeExpenseProgressBar(double income, double expenses) {
