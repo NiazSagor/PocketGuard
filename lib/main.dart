@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:i18n_extension/i18n_extension.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pocket_guard/services/locale-service.dart';
@@ -18,6 +19,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 void main() async {
   DartPluginRegistrant.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = true;
   tz_data.initializeTimeZones();
 
   ServiceConfig.localTimezone = await FlutterTimezone.getLocalTimezone();

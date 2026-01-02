@@ -655,9 +655,14 @@ class EditRecordPageState extends State<EditRecordPage> {
     String categorySign = record?.category?.categoryType == CategoryType.expense
         ? "-"
         : "+";
+    final bool isExpense =
+        record!.category!.categoryType == CategoryType.expense;
+    final Color themeColor = isExpense ? Colors.red : Colors.green;
     return Card(
       elevation: 1,
+      clipBehavior: Clip.antiAlias,
       child: Container(
+        color: themeColor.withOpacity(0.08),
         child: IntrinsicHeight(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -680,6 +685,7 @@ class EditRecordPageState extends State<EditRecordPage> {
                   child: Semantics(
                     identifier: 'amount-field',
                     child: TextFormField(
+                      cursorColor: themeColor,
                       enabled: !readOnly,
                       controller: _textEditingController,
                       autofocus: record!.value == null,
@@ -709,6 +715,7 @@ class EditRecordPageState extends State<EditRecordPage> {
                       ),
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
+                        border: InputBorder.none,
                         floatingLabelBehavior: FloatingLabelBehavior.always,
                         hintText: "0",
                         labelText: "Amount".i18n,
