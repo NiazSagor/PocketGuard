@@ -31,6 +31,14 @@ class ChartProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (records.isEmpty) {
+        _spots = [];
+        _totalIncome = 0;
+        _totalExpense = 0;
+        _isProfitable = true;
+        return;
+      }
+
       _totalIncome = records
           .where(
             (record) => record!.category!.categoryType == CategoryType.income,

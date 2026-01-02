@@ -35,6 +35,12 @@ class DaysSummaryBoxState extends State<DaysSummaryBox> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _chartProvider.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 1,
