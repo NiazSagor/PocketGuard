@@ -1,13 +1,13 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pocket_guard/settings/constants/preferences-keys.dart';
 import 'package:pocket_guard/settings/preferences-utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_theme/system_theme.dart';
 
 import 'helpers/records-utility-functions.dart';
-
 
 const String FontNameDefault = 'Montserrat';
 
@@ -20,14 +20,18 @@ class MaterialThemeInstance {
 
   static getDefaultColorScheme(Brightness brightness) {
     ColorScheme defaultColorScheme = ColorScheme.fromSeed(
-        seedColor: defaultSeedColor, brightness: brightness);
+      seedColor: defaultSeedColor,
+      brightness: brightness,
+    );
     return defaultColorScheme;
   }
 
   static Future<ColorScheme> getColorScheme(Brightness brightness) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int? dynamicColorScheme =
-        PreferencesUtils.getOrDefault<int>(prefs, PreferencesKeys.themeColor);
+    int? dynamicColorScheme = PreferencesUtils.getOrDefault<int>(
+      prefs,
+      PreferencesKeys.themeColor,
+    );
 
     switch (dynamicColorScheme) {
       case 1:
@@ -40,7 +44,9 @@ class MaterialThemeInstance {
             log("Failed to retrieve system color, using default instead");
           }
           return ColorScheme.fromSeed(
-              seedColor: accentColor, brightness: brightness);
+            seedColor: accentColor,
+            brightness: brightness,
+          );
         }
 
       case 2:
@@ -48,7 +54,9 @@ class MaterialThemeInstance {
           log("Using dynamic colors");
           AssetImage assetImage = getBackgroundImage();
           ColorScheme colorScheme = await ColorScheme.fromImageProvider(
-              provider: assetImage, brightness: brightness);
+            provider: assetImage,
+            brightness: brightness,
+          );
           return colorScheme;
         }
 
@@ -61,17 +69,24 @@ class MaterialThemeInstance {
 
   static getMaterialThemeData(Brightness brightness) async {
     var colorScheme = await getColorScheme(brightness);
-    return ThemeData(
+    ThemeData baseTheme = ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
       brightness: brightness,
+    );
+
+    return baseTheme.copyWith(
+      textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme),
+      primaryTextTheme: GoogleFonts.interTextTheme(baseTheme.primaryTextTheme),
     );
   }
 
   static Future<ThemeMode> getThemeMode() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int? themeModeIndex =
-        PreferencesUtils.getOrDefault<int>(prefs, PreferencesKeys.themeMode);
+    int? themeModeIndex = PreferencesUtils.getOrDefault<int>(
+      prefs,
+      PreferencesKeys.themeMode,
+    );
     themeMode = ThemeMode.values[themeModeIndex!];
     return themeMode!;
   }
