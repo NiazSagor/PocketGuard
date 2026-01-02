@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:pocket_guard/records/components/days-summary-box-card.dart';
 import 'package:pocket_guard/records/components/records-day-list.dart';
 import 'package:pocket_guard/records/components/tab_records_search_app_bar.dart';
+import 'package:pocket_guard/records/components/top_spending_carousel.dart';
 import 'package:pocket_guard/records/controllers/tab_records_controller.dart';
 
 import '../i18n.dart';
@@ -30,14 +31,10 @@ class TabRecordsState extends State<TabRecords> {
   @override
   void initState() {
     super.initState();
-    _controller = TabRecordsController(
-      onStateChanged: () => setState(() {}),
-    );
+    _controller = TabRecordsController(onStateChanged: () => setState(() {}));
 
     _state = SchedulerBinding.instance.lifecycleState;
-    _listener = AppLifecycleListener(
-      onStateChange: _handleOnResume,
-    );
+    _listener = AppLifecycleListener(onStateChange: _handleOnResume);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.initialize();
@@ -75,14 +72,14 @@ class TabRecordsState extends State<TabRecords> {
   Widget _buildBody() {
     return NotificationListener<ScrollNotification>(
       onNotification: (scrollInfo) {
-        setState(() {
-          _isAppBarExpanded = scrollInfo.metrics.pixels < 100;
-        });
+        if (scrollInfo.depth == 0) {
+          setState(() {
+            _isAppBarExpanded = scrollInfo.metrics.pixels < 100;
+          });
+        }
         return true;
       },
-      child: CustomScrollView(
-        slivers: _buildSlivers(),
-      ),
+      child: CustomScrollView(slivers: _buildSlivers()),
     );
   }
 
@@ -90,17 +87,21 @@ class TabRecordsState extends State<TabRecords> {
     return <Widget>[
       if (!_controller.isSearchingEnabled) _buildMainSliverAppBar(),
       _buildSummarySection(),
-      const SliverToBoxAdapter(
-        child: Divider(indent: 50, endIndent: 50),
-      ),
+
+      if (_controller.filteredRecords.isNotEmpty)
+        SliverToBoxAdapter(
+          child: TopSpendingCarousel(
+            passedRecords:
+                _controller.overviewRecords ?? _controller.filteredRecords,
+          ),
+        ),
+      const SliverToBoxAdapter(child: Divider(indent: 50, endIndent: 50)),
       if (_controller.filteredRecords.isEmpty) _buildEmptyState(),
       RecordsDayList(
         _controller.filteredRecords,
         onListBackCallback: _controller.updateRecurrentRecordsAndFetchRecords,
       ),
-      const SliverToBoxAdapter(
-        child: SizedBox(height: 75),
-      ),
+      const SliverToBoxAdapter(child: SizedBox(height: 75)),
     ];
   }
 
@@ -133,10 +134,12 @@ class TabRecordsState extends State<TabRecords> {
 
   Widget _buildSummarySection() {
     return SliverToBoxAdapter(
-      child: Padding( // Use Padding instead of Container with fixed height
+      child: Padding(
+        // Use Padding instead of Container with fixed height
         padding: const EdgeInsets.fromLTRB(6, 10, 6, 5),
         child: DaysSummaryBox(
-            _controller.overviewRecords ?? _controller.filteredRecords),
+          _controller.overviewRecords ?? _controller.filteredRecords,
+        ),
       ),
     );
   }
@@ -161,10 +164,7 @@ class TabRecordsState extends State<TabRecords> {
     return FloatingActionButton(
       onPressed: () => _controller.navigateToAddNewRecord(context),
       tooltip: 'Add a new record'.i18n,
-      child: Semantics(
-        identifier: 'add-record',
-        child: const Icon(Icons.add),
-      ),
+      child: Semantics(identifier: 'add-record', child: const Icon(Icons.add)),
     );
   }
 

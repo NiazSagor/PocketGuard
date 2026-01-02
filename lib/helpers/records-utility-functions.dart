@@ -5,6 +5,8 @@ import 'package:i18n_extension/default.i18n.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/number_symbols.dart';
 import 'package:intl/number_symbols_data.dart';
+import 'package:pocket_guard/models/category-type.dart';
+import 'package:pocket_guard/models/category.dart';
 import 'package:pocket_guard/models/records-per-day.dart';
 import 'package:pocket_guard/models/record.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
@@ -335,4 +337,26 @@ Future<List<Record?>> getRecordsByHomepageTimeInterval(
     case HomepageTimeInterval.All:
       return await getAllRecords(database);
   }
+}
+
+Map<Category, double> getTopCategories(List<Record?> records) {
+  Map<Category, double> categoryMap = {};
+
+  for (var record in records) {
+    // Check if it's an expense (categoryType != 0)
+    if (record != null && record.category != null && record.category?.categoryType != CategoryType.income) {
+      Category cat = record.category!;
+      double val = record.value?.abs() ?? 0.0;
+
+      // Update the sum for this specific Category object
+      categoryMap[cat] = (categoryMap[cat] ?? 0.0) + val;
+    }
+  }
+
+  // Sort entries by the accumulated double value (descending)
+  var sortedEntries = categoryMap.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+
+  // Return the top 5 Category-Amount pairs
+  return Map.fromEntries(sortedEntries.take(5));
 }
