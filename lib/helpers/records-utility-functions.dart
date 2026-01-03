@@ -256,19 +256,13 @@ String stripUnknownPatternCharacters(String toParse) {
 }
 
 AssetImage getBackgroundImage() {
-  if (ServiceConfig.isPremium) {
+  try {
+    return AssetImage(
+      'assets/images/${getCurrentSeason()}'
+          '.png',
+    );
+  } on Exception catch (_) {
     return AssetImage('assets/images/background.jpg');
-  } else {
-    try {
-      var now = DateTime.now();
-      String month = now.month.toString();
-      return AssetImage(
-        'assets/images/${getCurrentSeason()}'
-        '.png',
-      );
-    } on Exception catch (_) {
-      return AssetImage('assets/images/background.jpg');
-    }
   }
 }
 

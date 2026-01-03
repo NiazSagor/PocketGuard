@@ -5,87 +5,69 @@ import 'package:pocket_guard/models/category.dart';
 import '../i18n.dart';
 import 'edit-category-page.dart';
 
-class CategoriesList extends StatefulWidget {
+class CategoriesList extends StatelessWidget {
   /// CategoriesList fetches the categories of a given categoryType (input parameter)
   /// and renders them using a vertical ListView.
 
+  final _biggerFont = const TextStyle(fontSize: 18.0);
   final List<Category?> categories;
   final void Function()? callback;
 
-  CategoriesList(this.categories, {this.callback});
+  const CategoriesList(this.categories, {super.key, this.callback});
 
   @override
-  CategoriesListState createState() => CategoriesListState();
-}
-
-class CategoriesListState extends State<CategoriesList> {
-  @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.all(15),
+      child: categories.isEmpty
+          ? Column(
+              children: <Widget>[
+                Image.asset('assets/images/no_entry_2.png', width: 200),
+                Text(
+                  "No categories yet.".i18n,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 22.0),
+                ),
+              ],
+            )
+          : _buildCategories(context),
+    );
   }
 
-  final _biggerFont = const TextStyle(fontSize: 18.0);
-
-  Widget _buildCategories() {
+  Widget _buildCategories(BuildContext context) {
     return ListView.separated(
-        separatorBuilder: (context, index) => Divider(
-              thickness: 0.5,
-            ),
-        itemCount: widget.categories.length,
-        padding: const EdgeInsets.all(6.0),
-        itemBuilder: /*1*/ (context, i) {
-          return _buildCategory(widget.categories[i]!);
-        });
+      separatorBuilder: (context, index) => Divider(thickness: 0.5),
+      itemCount: categories.length,
+      padding: const EdgeInsets.all(6.0),
+      itemBuilder: /*1*/ (context, i) {
+        return _buildCategory(categories[i]!, context);
+      },
+    );
   }
 
-  Widget _buildCategory(Category category) {
+  Widget _buildCategory(Category category, BuildContext context) {
     return InkWell(
       onTap: () async {
         await Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => EditCategoryPage(passedCategory: category)),
+            builder: (context) => EditCategoryPage(passedCategory: category),
+          ),
         );
-        if (widget.callback != null) widget.callback!();
+        if (callback != null) callback!();
       },
       child: Opacity(
         opacity: category.isArchived ? 0.8 : 1.0, // Dim the tile
         child: ListTile(
           leading: CategoryIconCircle(
-              iconEmoji: category.iconEmoji,
-              iconDataFromDefaultIconSet: category.icon,
-              backgroundColor: category.color,
-              overlayIcon: category.isArchived ? Icons.archive : null
+            iconEmoji: category.iconEmoji,
+            iconDataFromDefaultIconSet: category.icon,
+            backgroundColor: category.color,
+            overlayIcon: category.isArchived ? Icons.archive : null,
           ),
           title: Text(category.name!, style: _biggerFont),
         ),
       ),
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // ignore: unnecessary_null_comparison
-    return widget.categories != null
-        ? new Container(
-            margin: EdgeInsets.all(15),
-            child: widget.categories.length == 0
-                ? new Column(
-                    children: <Widget>[
-                      Image.asset(
-                        'assets/images/no_entry_2.png',
-                        width: 200,
-                      ),
-                      Text(
-                        "No categories yet.".i18n,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22.0,
-                        ),
-                      )
-                    ],
-                  )
-                : _buildCategories())
-        : new Container();
   }
 }

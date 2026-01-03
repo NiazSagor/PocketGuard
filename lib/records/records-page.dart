@@ -1,7 +1,6 @@
 import 'dart:core';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:pocket_guard/records/components/days-summary-box-card.dart';
 import 'package:pocket_guard/records/components/records-day-list.dart';
 import 'package:pocket_guard/records/components/tab_records_search_app_bar.dart';
@@ -25,15 +24,19 @@ class TabRecords extends StatefulWidget {
 class TabRecordsState extends State<TabRecords> {
   late final TabRecordsController _controller;
   late final AppLifecycleListener _listener;
-  late AppLifecycleState? _state;
-  bool _isAppBarExpanded = true;
+  final ValueNotifier<bool> _isExpandedNotifier = ValueNotifier<bool>(true);
+
+  void _onScroll(ScrollNotification scrollInfo) {
+    final bool isExpanded = scrollInfo.metrics.pixels < 100;
+    if (_isExpandedNotifier.value != isExpanded) {
+      _isExpandedNotifier.value = isExpanded;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _controller = TabRecordsController(onStateChanged: () => setState(() {}));
-
-    _state = SchedulerBinding.instance.lifecycleState;
     _listener = AppLifecycleListener(onStateChange: _handleOnResume);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -51,6 +54,7 @@ class TabRecordsState extends State<TabRecords> {
   void dispose() {
     _listener.dispose();
     _controller.dispose();
+    _isExpandedNotifier.dispose();
     super.dispose();
   }
 
@@ -72,12 +76,8 @@ class TabRecordsState extends State<TabRecords> {
   Widget _buildBody() {
     return NotificationListener<ScrollNotification>(
       onNotification: (scrollInfo) {
-        if (scrollInfo.depth == 0) {
-          setState(() {
-            _isAppBarExpanded = scrollInfo.metrics.pixels < 100;
-          });
-        }
-        return true;
+        _onScroll(scrollInfo);
+        return false;
       },
       child: CustomScrollView(slivers: _buildSlivers()),
     );
@@ -133,14 +133,20 @@ class TabRecordsState extends State<TabRecords> {
   }
 
   Widget _buildMainSliverAppBar() {
-    return TabRecordsAppBar(
-      controller: _controller,
-      isAppBarExpanded: _isAppBarExpanded,
-      onDatePickerPressed: () => _showDatePicker(),
-      onStatisticsPressed: () => _controller.navigateToStatisticsPage(context),
-      onSearchPressed: () => _controller.startSearch(),
-      onMenuItemSelected: (index) =>
-          _controller.handleMenuAction(context, index),
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isExpandedNotifier,
+      builder: (context, isExpanded, child) {
+        return TabRecordsAppBar(
+          controller: _controller,
+          isAppBarExpanded: isExpanded,
+          onDatePickerPressed: () => _showDatePicker(),
+          onStatisticsPressed: () =>
+              _controller.navigateToStatisticsPage(context),
+          onSearchPressed: () => _controller.startSearch(),
+          onMenuItemSelected: (index) =>
+              _controller.handleMenuAction(context, index),
+        );
+      },
     );
   }
 

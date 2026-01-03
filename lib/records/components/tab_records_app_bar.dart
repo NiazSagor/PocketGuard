@@ -44,7 +44,10 @@ class TabRecordsAppBar extends StatelessWidget {
         ],
         centerTitle: false,
         titlePadding: _getTitlePadding(
-            headerPaddingBottom, canShiftBack, canShiftForward),
+          headerPaddingBottom,
+          canShiftBack,
+          canShiftForward,
+        ),
         title: _buildTitle(headerFontSize, canShiftBack, canShiftForward),
         background: _buildBackground(),
       ),
@@ -81,7 +84,10 @@ class TabRecordsAppBar extends StatelessWidget {
   }
 
   Widget _buildTitle(
-      double headerFontSize, bool canShiftBack, bool canShiftForward) {
+    double headerFontSize,
+    bool canShiftBack,
+    bool canShiftForward,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -118,24 +124,36 @@ class TabRecordsAppBar extends StatelessWidget {
   }
 
   Widget _buildBackground() {
-    return ColorFiltered(
-      colorFilter: ColorFilter.mode(
-        Colors.black.withOpacity(0.1),
-        BlendMode.srcATop,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            fit: BoxFit.cover,
-            image: getBackgroundImage(),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // The Seasonal Image
+        Image(image: getBackgroundImage(), fit: BoxFit.cover),
+        // The Gradient Scrim (Darkens top and bottom for readability)
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black54, // Darker at the top for Action buttons
+                Colors.transparent,
+                Colors.transparent,
+                Colors.black87, // Darkest at the bottom for the Month Name
+              ],
+              stops: [0.0, 0.3, 0.6, 1.0],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
   EdgeInsets _getTitlePadding(
-      double headerPaddingBottom, bool canShiftBack, bool canShiftForward) {
+    double headerPaddingBottom,
+    bool canShiftBack,
+    bool canShiftForward,
+  ) {
     return !isAppBarExpanded
         ? EdgeInsets.fromLTRB(15, 15, 15, headerPaddingBottom)
         : EdgeInsets.fromLTRB(
