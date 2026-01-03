@@ -212,7 +212,8 @@ class TabSettings extends StatelessWidget {
             title: 'Info'.i18n,
             subtitle: 'Privacy policy and credits'.i18n,
             onPressed: () async => await _launchURL(
-                "https://github.com/emavgl/oinkoin/blob/master/privacy-policy.md"),
+              //todo
+                ""),
           ),
           SettingsItem(
             icon: Icon(

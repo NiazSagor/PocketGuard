@@ -267,7 +267,7 @@ class BackupPageState extends State<BackupPage> {
                       title: "Enable automatic backup".i18n,
                       enabled: ServiceConfig.isPremium,
                       subtitle: !ServiceConfig.isPremium
-                          ? "Available on Oinkoin Pro".i18n
+                          ? "Available on PocketGuard Pro".i18n
                           : "Enable to automatically backup at every access"
                               .i18n,
                       switchValue: enableAutomaticBackup,
