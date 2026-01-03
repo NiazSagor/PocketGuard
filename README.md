@@ -94,22 +94,6 @@ PocketGuard uses a sophisticated design language tailored for readability and fi
 
 ----------
 
-## 📸 Screenshots
-
-**Records View**
-
-**Category Edit**
-
-**Statistics**
-
-_Insert Screenshot_
-
-_Insert Screenshot_
-
-_Insert Screenshot_
-
-----------
-
 ## 🤝 Contributing
 
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
