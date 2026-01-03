@@ -76,7 +76,7 @@ class TabRecordsState extends State<TabRecords> {
   Widget _buildBody() {
     return NotificationListener<ScrollNotification>(
       onNotification: (scrollInfo) {
-        _onScroll(scrollInfo);
+        //_onScroll(scrollInfo);
         return false;
       },
       child: CustomScrollView(slivers: _buildSlivers()),
@@ -133,20 +133,21 @@ class TabRecordsState extends State<TabRecords> {
   }
 
   Widget _buildMainSliverAppBar() {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _isExpandedNotifier,
-      builder: (context, isExpanded, child) {
-        return TabRecordsAppBar(
-          controller: _controller,
-          isAppBarExpanded: isExpanded,
-          onDatePickerPressed: () => _showDatePicker(),
-          onStatisticsPressed: () =>
-              _controller.navigateToStatisticsPage(context),
-          onSearchPressed: () => _controller.startSearch(),
-          onMenuItemSelected: (index) =>
-              _controller.handleMenuAction(context, index),
-        );
-      },
+    // return ValueListenableBuilder<bool>(
+    //   valueListenable: _isExpandedNotifier,
+    //   builder: (context, isExpanded, child) {
+    //
+    //   },
+    // );
+    return TabRecordsAppBar(
+      controller: _controller,
+      isAppBarExpanded: false,
+      onDatePickerPressed: () => _showDatePicker(),
+      onStatisticsPressed: () =>
+          _controller.navigateToStatisticsPage(context),
+      onSearchPressed: () => _controller.startSearch(),
+      onMenuItemSelected: (index) =>
+          _controller.handleMenuAction(context, index),
     );
   }
 

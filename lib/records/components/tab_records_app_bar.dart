@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pocket_guard/records/components/styled_action_buttons.dart';
 import 'package:pocket_guard/records/components/styled_popup_menu_button.dart';
 
@@ -25,32 +26,53 @@ class TabRecordsAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final headerFontSize = controller.getHeaderFontSize();
-    final headerPaddingBottom = controller.getHeaderPaddingBottom();
+    // final headerFontSize = controller.getHeaderFontSize();
+    // final headerPaddingBottom = controller.getHeaderPaddingBottom();
     final canShiftBack = controller.canShiftBack();
     final canShiftForward = controller.canShiftForward();
 
     return SliverAppBar(
-      elevation: 0,
+      floating: true,
+      snap: true,
+      elevation: 2,
       backgroundColor: Theme.of(context).primaryColor,
       actions: _buildActions(),
       pinned: true,
-      expandedHeight: 180.0,
-      flexibleSpace: FlexibleSpaceBar(
-        stretchModes: <StretchMode>[
-          StretchMode.zoomBackground,
-          StretchMode.blurBackground,
-          StretchMode.fadeTitle,
-        ],
-        centerTitle: false,
-        titlePadding: _getTitlePadding(
-          headerPaddingBottom,
-          canShiftBack,
-          canShiftForward,
+      titleSpacing: 0,
+      expandedHeight: null,
+      title: _buildCompactNavigation(canShiftBack, canShiftForward),
+    );
+  }
+
+  Widget _buildCompactNavigation(bool canShiftBack, bool canShiftForward) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (canShiftBack) _buildShiftButton(Icons.chevron_left, -1),
+
+        GestureDetector(
+          onTap: onDatePickerPressed,
+          child: Text(
+            controller.header,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 18,
+              letterSpacing: -0.5,
+            ),
+          ),
         ),
-        title: _buildTitle(headerFontSize, canShiftBack, canShiftForward),
-        background: _buildBackground(),
-      ),
+
+        if (canShiftForward) _buildShiftButton(Icons.chevron_right, 1),
+      ],
+    );
+  }
+
+  Widget _buildShiftButton(IconData icon, int offset) {
+    return IconButton(
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(), // Removes default 48px padding
+      icon: Icon(icon, color: Colors.white),
+      onPressed: () => controller.shiftMonthOrYear(offset),
     );
   }
 
@@ -58,12 +80,6 @@ class TabRecordsAppBar extends StatelessWidget {
     const double actionButtonScale = 1.0;
 
     return <Widget>[
-      StyledActionButton(
-        icon: Icons.calendar_today,
-        onPressed: onDatePickerPressed,
-        semanticsId: 'select-date',
-        scaleFactor: actionButtonScale,
-      ),
       StyledActionButton(
         icon: Icons.donut_small,
         onPressed: onStatisticsPressed,
@@ -110,18 +126,18 @@ class TabRecordsAppBar extends StatelessWidget {
     );
   }
 
-  Widget _buildShiftButton(IconData icon, int direction) {
-    return SizedBox(
-      height: 30,
-      width: 30,
-      child: IconButton(
-        icon: Icon(icon, color: Colors.white, size: 24),
-        onPressed: () => controller.shiftMonthOrYear(direction),
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
-      ),
-    );
-  }
+  // Widget _buildShiftButton(IconData icon, int direction) {
+  //   return SizedBox(
+  //     height: 30,
+  //     width: 30,
+  //     child: IconButton(
+  //       icon: Icon(icon, color: Colors.white, size: 24),
+  //       onPressed: () => controller.shiftMonthOrYear(direction),
+  //       padding: EdgeInsets.zero,
+  //       constraints: const BoxConstraints(),
+  //     ),
+  //   );
+  // }
 
   Widget _buildBackground() {
     return Stack(

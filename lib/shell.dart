@@ -159,6 +159,13 @@ class ShellState extends State<Shell> {
           setState(() {
             _currentIndex = index;
           });
+          // refresh data whenever changing the tab
+          if (_currentIndex == 0) {
+            await _tabRecordsKey.currentState?.onTabChange();
+          }
+          if (_currentIndex == 1) {
+            await _tabCategoriesKey.currentState?.onTabChange();
+          }
         },
         destinations: [
           NavigationDestination(
