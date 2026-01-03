@@ -1,7 +1,9 @@
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emojipicker;
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:i18n_extension/i18n_extension.dart';
+import 'package:pocket_guard/categories/notifiers/edit_category_provider.dart';
 import 'package:pocket_guard/helpers/alert-dialog-builder.dart';
 import 'package:pocket_guard/models/category-icons.dart';
 import 'package:pocket_guard/models/category-type.dart';
@@ -10,9 +12,9 @@ import 'package:pocket_guard/premium/splash-screen.dart';
 import 'package:pocket_guard/premium/util-widgets.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
 import 'package:pocket_guard/services/service-config.dart';
+
 import '../i18n.dart';
 import '../style.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class EditCategoryPage extends StatefulWidget {
   /// EditCategoryPage is a page containing forms for the editing of a Category object.
@@ -23,70 +25,43 @@ class EditCategoryPage extends StatefulWidget {
   final CategoryType? categoryType;
 
   EditCategoryPage({Key? key, this.passedCategory, this.categoryType})
-      : super(key: key);
+    : super(key: key);
 
   @override
-  EditCategoryPageState createState() =>
-      EditCategoryPageState(passedCategory, categoryType);
+  EditCategoryPageState createState() => EditCategoryPageState();
 }
 
 class EditCategoryPageState extends State<EditCategoryPage> {
-  Category? passedCategory;
-  Category? category;
-  CategoryType? categoryType;
+  late EditCategoryProvider _stateProvider;
+  late TextEditingController _nameController;
+  TextEditingController _controller = TextEditingController();
   late List<IconData?> icons;
 
-  EditCategoryPageState(this.passedCategory, this.categoryType);
-
-  int?
-      chosenColorIndex; // Index of the Category.color list for showing the selected color in the list
-  int?
-      chosenIconIndex; // Index of the Category.icons list for showing the selected color in the list
-  Color? pickedColor;
-  String? categoryName;
-  String currentEmoji = '😎'; // Default emoji
+  EditCategoryPageState();
 
   DatabaseInterface database = ServiceConfig.database;
 
   final _formKey = GlobalKey<FormState>();
 
-  Category initCategory() {
-    Category category = new Category(null);
-    if (this.passedCategory == null) {
-      category.color = Category.colors[0];
-      category.icon = FontAwesomeIcons.question;
-      category.iconCodePoint = category.icon!.codePoint;
-      category.categoryType = categoryType;
-    } else {
-      category = Category.fromMap(passedCategory!.toMap());
-      categoryName = passedCategory!.name;
-    }
-    return category;
-  }
-
   @override
   void initState() {
     super.initState();
-    category = initCategory();
-    icons = ServiceConfig.isPremium
-        ? CategoryIcons.pro_category_icons
-        : CategoryIcons.free_category_icons;
+    _stateProvider = EditCategoryProvider(
+      isPremium: ServiceConfig.isPremium,
+      categoryType: widget.categoryType,
+      passedCategory: widget.passedCategory,
+      database: database,
+    );
+    icons = _stateProvider.availableIcons;
+    _nameController = TextEditingController(text: _stateProvider.category.name);
+  }
 
-    // Icon
-    if (category!.icon == null && category!.iconEmoji != null) {
-      chosenIconIndex = -1;
-      currentEmoji = category!.iconEmoji!;
-    } else {
-      chosenIconIndex = icons.indexOf(category!.icon);
-    }
-
-    chosenColorIndex = Category.colors.indexOf(category!.color);
-    if (chosenColorIndex == -1) {
-      pickedColor = category!.color;
-    }
-    if (chosenColorIndex == -2) {
-      pickedColor = null;
-    }
+  @override
+  dispose() {
+    _nameController.dispose();
+    _stateProvider.dispose();
+    _controller.dispose();
+    super.dispose();
   }
 
   Widget _getPageSeparatorLabel(String labelText) {
@@ -105,50 +80,49 @@ class EditCategoryPageState extends State<EditCategoryPage> {
     );
   }
 
-  bool _emojiShowing = false;
-  TextEditingController _controller = TextEditingController();
-
   Widget _getIconsGrid() {
     var surfaceContainer = Theme.of(context).colorScheme.surfaceContainer;
     var bottonActionColor = Theme.of(context).colorScheme.surfaceContainerLow;
-    var buttonColors = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
+    var buttonColors = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.6);
     return Column(
       children: [
-        Offstage(
-          offstage: !_emojiShowing,
-          child: emojipicker.EmojiPicker(
-            textEditingController: _controller,
-            config: emojipicker.Config(
-              locale: I18n.locale,
-              height: 256,
-              checkPlatformCompatibility: true,
-              emojiViewConfig: emojipicker.EmojiViewConfig(
-                  emojiSizeMax: 28, backgroundColor: surfaceContainer),
-              categoryViewConfig: emojipicker.CategoryViewConfig(
-                backgroundColor: bottonActionColor,
-                iconColorSelected: buttonColors,
+        ListenableBuilder(
+          listenable: _stateProvider,
+          builder: (context, child) {
+            return Offstage(
+              offstage: !_stateProvider.isEmojiMode,
+              child: emojipicker.EmojiPicker(
+                textEditingController: _controller,
+                config: emojipicker.Config(
+                  locale: I18n.locale,
+                  height: 256,
+                  checkPlatformCompatibility: true,
+                  emojiViewConfig: emojipicker.EmojiViewConfig(
+                    emojiSizeMax: 28,
+                    backgroundColor: surfaceContainer,
+                  ),
+                  categoryViewConfig: emojipicker.CategoryViewConfig(
+                    backgroundColor: bottonActionColor,
+                    iconColorSelected: buttonColors,
+                  ),
+                  bottomActionBarConfig: emojipicker.BottomActionBarConfig(
+                    backgroundColor: bottonActionColor,
+                    buttonColor: buttonColors,
+                    showBackspaceButton: false,
+                  ),
+                  searchViewConfig: emojipicker.SearchViewConfig(
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+                onEmojiSelected: (c, emoji) {
+                  _controller.text = emoji.emoji;
+                  _stateProvider.selectEmoji(emoji.emoji);
+                },
               ),
-              bottomActionBarConfig: emojipicker.BottomActionBarConfig(
-                backgroundColor: bottonActionColor,
-                buttonColor: buttonColors,
-                showBackspaceButton: false,
-              ),
-              searchViewConfig: emojipicker.SearchViewConfig(
-                backgroundColor: Colors.white,
-              ),
-            ),
-            onEmojiSelected: (c, emoji) {
-              setState(() {
-                _emojiShowing = false; // Hide the emoji picker after selection
-                _controller.text = emoji.emoji; // Display the emoji
-                chosenIconIndex = -1; // Use -1 to indicate an emoji was chosen
-                currentEmoji = emoji.emoji; // Update the current emoji
-                category!.iconCodePoint = null;
-                category!.icon = null;
-                category!.iconEmoji = currentEmoji;
-              });
-            },
-          ),
+            );
+          }
         ),
         GridView.count(
           padding: EdgeInsets.all(0),
@@ -159,66 +133,67 @@ class EditCategoryPageState extends State<EditCategoryPage> {
             // First IconButton with emoji
             Container(
               alignment: Alignment.center,
-              child: IconButton(
-                icon: ServiceConfig.isPremium
-                    ? Text(
-                        currentEmoji, // Display an emoji as text
-                        style: TextStyle(
-                          fontSize: 24, // Set the emoji size
-                        ),
-                      )
-                    : Stack(
-                        children: [
-                          Text(
-                            currentEmoji, // Display an emoji as text
+              child: ListenableBuilder(
+                listenable: _stateProvider,
+                builder: (context, child) {
+                  return IconButton(
+                    icon: ServiceConfig.isPremium
+                        ? Text(
+                            _stateProvider.currentEmoji, // Display an emoji as text
                             style: TextStyle(
                               fontSize: 24, // Set the emoji size
                             ),
+                          )
+                        : Stack(
+                            children: [
+                              Text(
+                                _stateProvider.currentEmoji, // Display an emoji as text
+                                style: TextStyle(
+                                  fontSize: 24, // Set the emoji size
+                                ),
+                              ),
+                              !ServiceConfig.isPremium
+                                  ? Container(
+                                      margin: EdgeInsets.fromLTRB(20, 20, 0, 0),
+                                      child: getProLabel(labelFontSize: 10.0),
+                                    )
+                                  : Container(),
+                            ],
                           ),
-                          !ServiceConfig.isPremium
-                              ? Container(
-                                  margin: EdgeInsets.fromLTRB(20, 20, 0, 0),
-                                  child: getProLabel(labelFontSize: 10.0),
-                                )
-                              : Container()
-                        ],
-                      ),
-                onPressed: ServiceConfig.isPremium
-                    ? () {
-                        setState(() {
-                          _emojiShowing =
-                              !_emojiShowing; // Toggle the emoji picker
-                        });
-                      }
-                    : () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => PremiumSplashScreen()),
-                        );
-                      },
+                    onPressed: ServiceConfig.isPremium
+                        ? () {
+                      _stateProvider.toggleEmojiShowing();
+                          }
+                        : () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PremiumSplashScreen(),
+                              ),
+                            );
+                          },
+                  );
+                }
               ),
             ),
             // Other icons
             ...List.generate(icons.length, (index) {
               return Container(
-                child: IconButton(
-                  icon: FaIcon(icons[index]),
-                  color: (chosenIconIndex == index)
-                      ? Theme.of(context).colorScheme.error
-                      : Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.6),
-                  onPressed: () {
-                    setState(() {
-                      _emojiShowing = false; // Hide emoji picker if open
-                      category!.icon = icons[index];
-                      category!.iconCodePoint = category!.icon!.codePoint;
-                      category!.iconEmoji = null;
-                      chosenIconIndex = index;
-                    });
-                  },
+                child: ListenableBuilder(
+                  listenable: _stateProvider,
+                  builder: (context, child) {
+                    return IconButton(
+                      icon: FaIcon(icons[index]),
+                      color: (_stateProvider.chosenIconIndex == index)
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      onPressed: () {
+                        _stateProvider.selectIcon(index);
+                      },
+                    );
+                  }
                 ),
               );
             }),
@@ -230,21 +205,24 @@ class EditCategoryPageState extends State<EditCategoryPage> {
 
   Widget _buildColorList() {
     return ListView.builder(
-        shrinkWrap: true,
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: Category.colors.length,
-        itemBuilder: /*1*/ (context, index) {
-          return Container(
-              margin: EdgeInsets.all(10),
-              child: Container(
-                  width: 70,
-                  child: ClipOval(
-                      child: Material(
-                    color: Category.colors[index], // button color
-                    child: InkWell(
+      shrinkWrap: true,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: Category.colors.length,
+      itemBuilder: /*1*/ (context, index) {
+        return Container(
+          margin: EdgeInsets.all(10),
+          child: Container(
+            width: 70,
+            child: ClipOval(
+              child: Material(
+                color: Category.colors[index], // button color
+                child: ListenableBuilder(
+                  listenable: _stateProvider,
+                  builder: (context, child) {
+                    return InkWell(
                       splashColor: Colors.white30, // inkwell color
-                      child: (index == chosenColorIndex)
+                      child: (index == _stateProvider.chosenColorIndex)
                           ? SizedBox(
                               width: 50,
                               height: 50,
@@ -256,28 +234,33 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                             )
                           : Container(),
                       onTap: () {
-                        setState(() {
-                          category!.color = Category.colors[index];
-                          chosenColorIndex = index;
-                        });
+                        _stateProvider.selectColor(index);
                       },
-                    ),
-                  ))));
-        });
+                    );
+                  }
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _createColorsList() {
     return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Container(
-            height: 90,
-            child: Row(
-              children: [
-                _createNoColorCircle(),
-                _createColorPickerCircle(),
-                _buildColorList(),
-              ],
-            )));
+      scrollDirection: Axis.horizontal,
+      child: Container(
+        height: 90,
+        child: Row(
+          children: [
+            _createNoColorCircle(),
+            _createColorPickerCircle(),
+            _buildColorList(),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _createNoColorCircle() {
@@ -296,10 +279,9 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle, // Ensure the shape is a circle
                     border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.8), // Light grey border
+                      color: Theme.of(context).colorScheme.onSurface.withValues(
+                        alpha: 0.8,
+                      ), // Light grey border
                       width: 2.0, // Border width
                     ),
                   ),
@@ -310,11 +292,7 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                   ),
                 ),
                 onTap: () async {
-                  setState(() {
-                    pickedColor = null;
-                    category!.color = null;
-                    chosenColorIndex = -2;
-                  });
+                  _stateProvider.resetColorCircle();
                 },
               ),
             ),
@@ -329,32 +307,38 @@ class EditCategoryPageState extends State<EditCategoryPage> {
     return Container(
       margin: EdgeInsets.all(10),
       child: ClipOval(
-        child: Material(
-          color: category!.color, // Button color
-          child: InkWell(
-            splashColor: category!.color, // InkWell color
-            child: SizedBox(
-              width: 70,
-              height: 70,
-              child: category!.iconEmoji != null
-                  ? Center(
-                      // Center the content
-                      child: Text(
-                      category!.iconEmoji!, // Display the emoji
-                      style: TextStyle(
-                        fontSize: 30, // Adjust the font size for the emoji
-                      ),
-                    ))
-                  : Icon(
-                      category!.icon, // Fallback to the icon
-                      color: category!.color != null
-                          ? Colors.white
-                          : Theme.of(context).colorScheme.onSurface,
-                      size: 30,
-                    ),
-            ),
-            onTap: () {},
-          ),
+        child: ListenableBuilder(
+          listenable: _stateProvider,
+          builder: (context, child) {
+            return Material(
+              color: _stateProvider.category.color, // Button color
+              child: InkWell(
+                splashColor: _stateProvider.category.color, // InkWell color
+                child: SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: _stateProvider.category.iconEmoji != null
+                      ? Center(
+                          // Center the content
+                          child: Text(
+                            _stateProvider.category.iconEmoji!, // Display the emoji
+                            style: TextStyle(
+                              fontSize: 30, // Adjust the font size for the emoji
+                            ),
+                          ),
+                        )
+                      : Icon(
+                    _stateProvider.category.icon, // Fallback to the icon
+                          color: _stateProvider.category.color != null
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
+                          size: 30,
+                        ),
+                ),
+                onTap: () {},
+              ),
+            );
+          }
         ),
       ),
     );
@@ -362,86 +346,83 @@ class EditCategoryPageState extends State<EditCategoryPage> {
 
   Widget _createColorPickerCircle() {
     return Container(
-        margin: EdgeInsets.all(10),
-        child: Stack(
-          children: [
-            ClipOval(
+      margin: const EdgeInsets.all(10),
+      child: Stack(
+        children: [
+          ListenableBuilder(
+            listenable: _stateProvider,
+            child: const SizedBox(
+              width: 70,
+              height: 70,
+              child: Icon(Icons.colorize, color: Colors.white, size: 30),
+            ),
+            builder: (context, staticIcon) {
+              return ClipOval(
                 child: Material(
-              child: Container(
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          begin: Alignment.topRight,
-                          end: Alignment.bottomLeft,
-                          colors: pickedColor == null
-                              ? [
-                                  Colors.yellow,
-                                  Colors.red,
-                                  Colors.indigo,
-                                  Colors.teal
-                                ]
-                              : [pickedColor!, pickedColor!])),
                   child: InkWell(
-                    splashColor: category!.color, // inkwell color
-                    child: SizedBox(
-                      width: 70,
-                      height: 70,
-                      child: Icon(
-                        Icons.colorize,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
+                    splashColor: _stateProvider.category.color,
                     onTap: ServiceConfig.isPremium
                         ? openColorPicker
-                        : () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => PremiumSplashScreen()),
-                            );
-                          },
-                  )), // button color
-            )),
-            ServiceConfig.isPremium ? Container() : getProLabel()
-          ],
-        ));
+                        : () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PremiumSplashScreen(),
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                          colors: _stateProvider.pickedColor == null
+                              ? [Colors.yellow, Colors.red, Colors.indigo, Colors.teal]
+                              : [_stateProvider.pickedColor!, _stateProvider.pickedColor!],
+                        ),
+                      ),
+                      child: staticIcon,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          if (!ServiceConfig.isPremium) getProLabel(),
+        ],
+      ),
+    );
   }
-
   openColorPicker() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Container(
-              padding: EdgeInsets.all(15),
-              color: Theme.of(context).primaryColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Choose a color".i18n,
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  IconButton(
-                      icon: const Icon(Icons.close),
-                      color: Colors.white,
-                      onPressed: () {
-                        Navigator.of(context, rootNavigator: true)
-                            .pop('dialog');
-                      })
-                ],
-              )),
+            padding: EdgeInsets.all(15),
+            color: Theme.of(context).primaryColor,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Choose a color".i18n,
+                  style: TextStyle(color: Colors.white),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  color: Colors.white,
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pop('dialog');
+                  },
+                ),
+              ],
+            ),
+          ),
           titlePadding: const EdgeInsets.all(0.0),
           contentPadding: const EdgeInsets.all(0.0),
           content: SingleChildScrollView(
             child: MaterialPicker(
               pickerColor: Category.colors[0]!,
               onColorChanged: (newColor) {
-                setState(() {
-                  pickedColor = newColor;
-                  category!.color = newColor;
-                  chosenColorIndex = -1;
-                });
+                _stateProvider.setCustomColor(newColor);
               },
               enableLabel: false,
             ),
@@ -453,15 +434,14 @@ class EditCategoryPageState extends State<EditCategoryPage> {
 
   Widget _getTextField() {
     return Expanded(
-        child: Form(
-      key: _formKey,
-      child: Container(
-        margin: EdgeInsets.all(10),
-        child: TextFormField(
+      child: Form(
+        key: _formKey,
+        child: Container(
+          margin: EdgeInsets.all(10),
+          child: TextFormField(
+            controller: _nameController,
             onChanged: (text) {
-              setState(() {
-                categoryName = text;
-              });
+              _stateProvider.updateCategoryName(text);
             },
             validator: (value) {
               if (value!.isEmpty) {
@@ -469,34 +449,37 @@ class EditCategoryPageState extends State<EditCategoryPage> {
               }
               return null;
             },
-            initialValue: categoryName,
             style: TextStyle(
-                fontSize: 22.0, color: Theme.of(context).colorScheme.onSurface),
+              fontSize: 22.0,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             decoration: InputDecoration(
               hintText: "Category name".i18n,
-              errorStyle: TextStyle(
-                fontSize: 16.0,
-              ),
-            )),
+              errorStyle: TextStyle(fontSize: 16.0),
+            ),
+          ),
+        ),
       ),
-    ));
+    );
   }
 
   Widget _getAppBar() {
-    return AppBar(title: Text("Edit category".i18n), actions: <Widget>[
-      Visibility(
+    return AppBar(
+      title: Text("Edit category".i18n),
+      actions: <Widget>[
+        Visibility(
           visible: widget.passedCategory != null,
           child: IconButton(
             icon: widget.passedCategory == null
                 ? const Icon(Icons.archive)
                 : !(widget.passedCategory!.isArchived)
-                    ? const Icon(Icons.archive)
-                    : const Icon(Icons.unarchive),
+                ? const Icon(Icons.archive)
+                : const Icon(Icons.unarchive),
             tooltip: widget.passedCategory == null
                 ? ""
                 : !(widget.passedCategory!.isArchived)
-                    ? "Archive".i18n
-                    : "Unarchive".i18n,
+                ? "Archive".i18n
+                : "Unarchive".i18n,
             onPressed: () async {
               bool isCurrentlyArchived = widget.passedCategory!.isArchived;
 
@@ -505,79 +488,86 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                   : "Do you really want to unarchive the category?".i18n;
 
               // Prompt confirmation
-              AlertDialogBuilder archiveDialog =
-                  AlertDialogBuilder(dialogMessage)
-                      .addTrueButtonName("Yes".i18n)
-                      .addFalseButtonName("No".i18n);
+              AlertDialogBuilder archiveDialog = AlertDialogBuilder(
+                dialogMessage,
+              ).addTrueButtonName("Yes".i18n).addFalseButtonName("No".i18n);
 
               if (!isCurrentlyArchived) {
                 archiveDialog.addSubtitle(
-                    "Archiving the category you will NOT remove the associated records"
-                        .i18n);
+                  "Archiving the category you will NOT remove the associated records"
+                      .i18n,
+                );
               }
 
               var continueArchivingAction = await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return archiveDialog.build(context);
-                  });
+                context: context,
+                builder: (BuildContext context) {
+                  return archiveDialog.build(context);
+                },
+              );
 
               if (continueArchivingAction) {
-                await database.archiveCategory(widget.passedCategory!.name!,
-                    widget.passedCategory!.categoryType!, !isCurrentlyArchived);
+                await database.archiveCategory(
+                  widget.passedCategory!.name!,
+                  widget.passedCategory!.categoryType!,
+                  !isCurrentlyArchived,
+                );
                 Navigator.pop(context);
               }
             },
-          )),
-      Visibility(
-        visible: widget.passedCategory != null,
-        child: PopupMenuButton<int>(
-          icon: Icon(Icons.more_vert),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(
-              Radius.circular(10.0),
-            ),
           ),
-          onSelected: (index) async {
-            if (index == 1) {
-              // Prompt confirmation
-              AlertDialogBuilder deleteDialog = AlertDialogBuilder(
-                      "Do you really want to delete the category?".i18n)
-                  .addSubtitle(
-                      "Deleting the category you will remove all the associated records"
-                          .i18n)
-                  .addTrueButtonName("Yes".i18n)
-                  .addFalseButtonName("No".i18n);
+        ),
+        Visibility(
+          visible: widget.passedCategory != null,
+          child: PopupMenuButton<int>(
+            icon: Icon(Icons.more_vert),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10.0)),
+            ),
+            onSelected: (index) async {
+              if (index == 1) {
+                // Prompt confirmation
+                AlertDialogBuilder deleteDialog =
+                    AlertDialogBuilder(
+                          "Do you really want to delete the category?".i18n,
+                        )
+                        .addSubtitle(
+                          "Deleting the category you will remove all the associated records"
+                              .i18n,
+                        )
+                        .addTrueButtonName("Yes".i18n)
+                        .addFalseButtonName("No".i18n);
 
-              var continueDelete = await showDialog(
+                var continueDelete = await showDialog(
                   context: context,
                   builder: (BuildContext context) {
                     return deleteDialog.build(context);
-                  });
+                  },
+                );
 
-              if (continueDelete) {
-                database.deleteCategory(widget.passedCategory!.name,
-                    widget.passedCategory!.categoryType);
-                Navigator.pop(context);
+                if (continueDelete) {
+                  database.deleteCategory(
+                    widget.passedCategory!.name,
+                    widget.passedCategory!.categoryType,
+                  );
+                  Navigator.pop(context);
+                }
               }
-            }
-          },
-          itemBuilder: (BuildContext context) {
-            var deleteStr = "Delete".i18n;
-            return {deleteStr: 1}.entries.map((entry) {
-              return PopupMenuItem<int>(
-                padding: EdgeInsets.all(20),
-                value: entry.value,
-                child: Text(entry.key,
-                    style: TextStyle(
-                      fontSize: 16,
-                    )),
-              );
-            }).toList();
-          },
+            },
+            itemBuilder: (BuildContext context) {
+              var deleteStr = "Delete".i18n;
+              return {deleteStr: 1}.entries.map((entry) {
+                return PopupMenuItem<int>(
+                  padding: EdgeInsets.all(20),
+                  value: entry.value,
+                  child: Text(entry.key, style: TextStyle(fontSize: 16)),
+                );
+              }).toList();
+            },
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   Widget _getPickColorCard() {
@@ -587,9 +577,7 @@ class EditCategoryPageState extends State<EditCategoryPage> {
         child: Column(
           children: [
             _getPageSeparatorLabel("Color".i18n),
-            Divider(
-              thickness: 0.5,
-            ),
+            Divider(thickness: 0.5),
             _createColorsList(),
           ],
         ),
@@ -603,9 +591,7 @@ class EditCategoryPageState extends State<EditCategoryPage> {
         child: Column(
           children: [
             _getPageSeparatorLabel("Icon".i18n),
-            Divider(
-              thickness: 0.5,
-            ),
+            Divider(thickness: 0.5),
             _getIconsGrid(),
           ],
         ),
@@ -615,41 +601,33 @@ class EditCategoryPageState extends State<EditCategoryPage> {
 
   Widget _getPreviewAndTitleCard() {
     return Container(
-        child: Column(
-      children: [
-        _getPageSeparatorLabel("Name".i18n),
-        Divider(
-          thickness: 0.5,
-        ),
-        Container(
-          child: Row(
-            children: <Widget>[
-              Container(child: _createCategoryCirclePreview()),
-              Container(child: _getTextField()),
-            ],
+      child: Column(
+        children: [
+          _getPageSeparatorLabel("Name".i18n),
+          Divider(thickness: 0.5),
+          Container(
+            child: Row(
+              children: <Widget>[
+                Container(child: _createCategoryCirclePreview()),
+                Container(child: _getTextField()),
+              ],
+            ),
           ),
-        ),
-      ],
-    ));
+        ],
+      ),
+    );
   }
 
   saveCategory() async {
     if (_formKey.currentState!.validate()) {
-      if (category!.name == null) {
-        // Then it is a newly created category
-        // Call the method add category
-        category!.name = categoryName;
-        await database.addCategory(category);
+      final success = await _stateProvider.saveCategory();
+      if (success) {
+        Navigator.pop(context);
       } else {
-        // If category.name is already set
-        // I'm editing an existing category
-        // Call the method updateCategory
-        String? existingName = category!.name;
-        var existingType = category!.categoryType;
-        category!.name = categoryName;
-        await database.updateCategory(existingName, existingType, category);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Please enter a valid name".i18n)),
+        );
       }
-      Navigator.pop(context);
     }
   }
 
