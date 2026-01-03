@@ -24,7 +24,7 @@ import 'database/sqlite-database.dart';
 /// BackupService contains the methods to create/restore backup file
 class BackupService {
 
-  static const String DEFAULT_STORAGE_DIR = "/storage/emulated/0/Documents/oinkoin";
+  static const String DEFAULT_STORAGE_DIR = "/storage/emulated/0/Documents/pocketguard";
 
   static const String MANDATORY_BACKUP_SUFFIX = "obackup.json";
 
@@ -353,7 +353,7 @@ class BackupService {
       return null;
     }
 
-    // Get all files in the directory that end with "_oinkoin_backup"
+    // Get all files in the directory that end with "_pocketguard_backup"
     final backupFiles = backupDir.listSync().whereType<File>().where((file) {
       return file.path.endsWith(MANDATORY_BACKUP_SUFFIX);
     });

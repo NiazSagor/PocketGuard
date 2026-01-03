@@ -43,7 +43,7 @@ class TabRecordsDatePicker extends StatelessWidget {
           context,
           title: "Year".i18n,
           subtitle:
-              !ServiceConfig.isPremium ? "Available on Oinkoin Pro".i18n : null,
+              !ServiceConfig.isPremium ? "Available on PocketGuard Pro".i18n : null,
           icon: FontAwesomeIcons.calendarDay,
           color: boxBackgroundColor,
           enabled: ServiceConfig.isPremium,
@@ -55,7 +55,7 @@ class TabRecordsDatePicker extends StatelessWidget {
           context,
           title: "Date Range".i18n,
           subtitle:
-              !ServiceConfig.isPremium ? "Available on Oinkoin Pro".i18n : null,
+              !ServiceConfig.isPremium ? "Available on PocketGuard Pro".i18n : null,
           icon: FontAwesomeIcons.calendarWeek,
           color: boxBackgroundColor,
           enabled: ServiceConfig.isPremium,

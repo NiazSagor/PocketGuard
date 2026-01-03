@@ -40,7 +40,7 @@ class PremiumSplashScreen extends StatelessWidget {
                   new TextSpan(text: 'Upgrade to'.i18n),
                   new TextSpan(text: ' '),
                   new TextSpan(
-                      text: 'Oinkoin Pro'.i18n,
+                      text: 'PocketGuard'.i18n,
                       style: new TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
@@ -169,7 +169,8 @@ class PremiumSplashScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 child: ElevatedButton(
                   onPressed: () async => await _launchURL(
-                      "https://play.google.com/store/apps/details?id=com.github.emavgl.piggybankpro"),
+                    // todo
+                      ""),
                   child: Text("DOWNLOAD IT NOW!".i18n, style: _biggerFont),
                 ),
               ),

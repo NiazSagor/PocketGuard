@@ -16,7 +16,7 @@ class MaterialThemeInstance {
   static ThemeData? darkTheme;
   static ThemeData? currentTheme;
   static ThemeMode? themeMode;
-  static Color defaultSeedColor = Color.fromARGB(255, 129, 156, 129);
+  static Color defaultSeedColor = const Color(0xFFFF5A32);
 
   static getDefaultColorScheme(Brightness brightness) {
     ColorScheme defaultColorScheme = ColorScheme.fromSeed(
