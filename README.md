@@ -11,18 +11,17 @@ PocketGuard is a modern, high-performance personal finance manager built with Fl
 
 ----------
 
-## ✨ Key Features
+## 🛠️ Features
 
--   **Intelligent Records:** Quickly log expenses and income with a compact, gesture-driven interface.
+-   **Intelligent Records** Quickly log expenses so you can get back to spending.
 
--   **Dynamic Categories:** Fully customizable categories with a built-in emoji picker and custom color engine.
+-   **Dynamic Categories**  Customizable categories with a built-in emoji picker. Finally, a place to categorize your "Late Night Pizza" 🍕 and "Emergency Stationery" 🖊️ with the color-coded respect they deserve.
 
--   **Smart Navigation:** A responsive `SliverAppBar` that hides on scroll to maximize your data view and snaps back when you need to change months.
+-   **Smart Navigation**  A `SliverAppBar` that hides when you scroll down. It’s basically the app's way of saying, _"I’ll look away while you scroll through your bad decisions, but I'll pop right back if you need to check the date."_
 
--   **Visual Insights:** Real-time statistics and spending breakdowns (Powered by a reactive Provider architecture).
+-   **Visual Insights**  Real-time statistics powered by a reactive Provider architecture. It turns your financial reality into pretty charts, because bad news is easier to swallow when it’s a nice shade of orange.
 
--   **Premium Experience:** Support for custom icons, expanded color palettes, and seasonal-free minimalist design.
-
+-   **Premium Experience**  Support for custom icons and expanded palettes. No more seasonal images of falling leaves to remind you that your "fun money" is also falling. Just clean, minimalist design for the sophisticated spender.
 
 ----------
 
