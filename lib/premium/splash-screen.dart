@@ -169,7 +169,8 @@ class PremiumSplashScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 child: ElevatedButton(
                   onPressed: () async => await _launchURL(
-                      "https://play.google.com/store/apps/details?id=com.github.emavgl.piggybankpro"),
+                    // todo
+                      ""),
                   child: Text("DOWNLOAD IT NOW!".i18n, style: _biggerFont),
                 ),
               ),
