@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:i18n_extension/i18n_extension.dart';
 import 'package:pocket_guard/categories/notifiers/edit_category_provider.dart';
 import 'package:pocket_guard/helpers/alert-dialog-builder.dart';
-import 'package:pocket_guard/models/category-icons.dart';
 import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/category.dart';
 import 'package:pocket_guard/premium/splash-screen.dart';
@@ -122,128 +121,97 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                 },
               ),
             );
-          }
+          },
         ),
-        GridView.count(
-          padding: EdgeInsets.all(0),
-          crossAxisCount: 5,
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          children: [
-            // First IconButton with emoji
-            Container(
-              alignment: Alignment.center,
-              child: ListenableBuilder(
-                listenable: _stateProvider,
-                builder: (context, child) {
-                  return IconButton(
-                    icon: ServiceConfig.isPremium
-                        ? Text(
-                            _stateProvider.currentEmoji, // Display an emoji as text
-                            style: TextStyle(
-                              fontSize: 24, // Set the emoji size
-                            ),
-                          )
-                        : Stack(
-                            children: [
-                              Text(
-                                _stateProvider.currentEmoji, // Display an emoji as text
-                                style: TextStyle(
-                                  fontSize: 24, // Set the emoji size
-                                ),
-                              ),
-                              !ServiceConfig.isPremium
-                                  ? Container(
-                                      margin: EdgeInsets.fromLTRB(20, 20, 0, 0),
-                                      child: getProLabel(labelFontSize: 10.0),
-                                    )
-                                  : Container(),
-                            ],
-                          ),
-                    onPressed: ServiceConfig.isPremium
-                        ? () {
-                      _stateProvider.toggleEmojiShowing();
-                          }
-                        : () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PremiumSplashScreen(),
-                              ),
-                            );
-                          },
-                  );
-                }
-              ),
-            ),
-            // Other icons
-            ...List.generate(icons.length, (index) {
-              return Container(
-                child: ListenableBuilder(
-                  listenable: _stateProvider,
-                  builder: (context, child) {
-                    return IconButton(
-                      icon: FaIcon(icons[index]),
-                      color: (_stateProvider.chosenIconIndex == index)
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.6),
-                      onPressed: () {
-                        _stateProvider.selectIcon(index);
-                      },
-                    );
-                  }
-                ),
-              );
-            }),
-          ],
-        ),
+        _buildIconGrid(),
       ],
     );
   }
 
-  Widget _buildColorList() {
-    return ListView.builder(
+  Widget _buildIconGrid() {
+    return GridView.builder(
       shrinkWrap: true,
-      scrollDirection: Axis.horizontal,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: Category.colors.length,
-      itemBuilder: /*1*/ (context, index) {
-        return Container(
-          margin: EdgeInsets.all(10),
-          child: Container(
-            width: 70,
-            child: ClipOval(
-              child: Material(
-                color: Category.colors[index], // button color
-                child: ListenableBuilder(
-                  listenable: _stateProvider,
-                  builder: (context, child) {
-                    return InkWell(
-                      splashColor: Colors.white30, // inkwell color
-                      child: (index == _stateProvider.chosenColorIndex)
-                          ? SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 20,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 5,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+      ),
+      itemCount: icons.length,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Container(
+            alignment: Alignment.center,
+            child: ListenableBuilder(
+              listenable: _stateProvider,
+              builder: (context, child) {
+                return IconButton(
+                  icon: ServiceConfig.isPremium
+                      ? Text(
+                          _stateProvider
+                              .currentEmoji, // Display an emoji as text
+                          style: TextStyle(
+                            fontSize: 24, // Set the emoji size
+                          ),
+                        )
+                      : Stack(
+                          children: [
+                            Text(
+                              _stateProvider.currentEmoji,
+                              // Display an emoji as text
+                              style: TextStyle(
+                                fontSize: 24, // Set the emoji size
                               ),
-                            )
-                          : Container(),
-                      onTap: () {
-                        _stateProvider.selectColor(index);
-                      },
-                    );
-                  }
-                ),
-              ),
+                            ),
+                            !ServiceConfig.isPremium
+                                ? Container(
+                                    margin: EdgeInsets.fromLTRB(20, 20, 0, 0),
+                                    child: getProLabel(labelFontSize: 10.0),
+                                  )
+                                : Container(),
+                          ],
+                        ),
+                  onPressed: ServiceConfig.isPremium
+                      ? () {
+                          _stateProvider.toggleEmojiShowing();
+                        }
+                      : () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PremiumSplashScreen(),
+                            ),
+                          );
+                        },
+                );
+              },
             ),
-          ),
+          );
+        }
+
+        return _IconTile(
+          index: index,
+          iconData: icons[index],
+          stateProvider: _stateProvider,
         );
       },
+    );
+  }
+
+  Widget _buildColorList() {
+    return SizedBox(
+      child: ListView.builder(
+        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
+        itemCount: Category.colors.length,
+        itemBuilder: (context, index) {
+          return _ColorCircle(
+            index: index,
+            color: Category.colors[index],
+            stateProvider: _stateProvider,
+          );
+        },
+      ),
     );
   }
 
@@ -321,14 +289,17 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                       ? Center(
                           // Center the content
                           child: Text(
-                            _stateProvider.category.iconEmoji!, // Display the emoji
+                            _stateProvider
+                                .category
+                                .iconEmoji!, // Display the emoji
                             style: TextStyle(
-                              fontSize: 30, // Adjust the font size for the emoji
+                              fontSize:
+                                  30, // Adjust the font size for the emoji
                             ),
                           ),
                         )
                       : Icon(
-                    _stateProvider.category.icon, // Fallback to the icon
+                          _stateProvider.category.icon, // Fallback to the icon
                           color: _stateProvider.category.color != null
                               ? Colors.white
                               : Theme.of(context).colorScheme.onSurface,
@@ -338,7 +309,7 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                 onTap: () {},
               ),
             );
-          }
+          },
         ),
       ),
     );
@@ -364,19 +335,27 @@ class EditCategoryPageState extends State<EditCategoryPage> {
                     onTap: ServiceConfig.isPremium
                         ? openColorPicker
                         : () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PremiumSplashScreen(),
-                      ),
-                    ),
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PremiumSplashScreen(),
+                            ),
+                          ),
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topRight,
                           end: Alignment.bottomLeft,
                           colors: _stateProvider.pickedColor == null
-                              ? [Colors.yellow, Colors.red, Colors.indigo, Colors.teal]
-                              : [_stateProvider.pickedColor!, _stateProvider.pickedColor!],
+                              ? [
+                                  Colors.yellow,
+                                  Colors.red,
+                                  Colors.indigo,
+                                  Colors.teal,
+                                ]
+                              : [
+                                  _stateProvider.pickedColor!,
+                                  _stateProvider.pickedColor!,
+                                ],
                         ),
                       ),
                       child: staticIcon,
@@ -391,6 +370,7 @@ class EditCategoryPageState extends State<EditCategoryPage> {
       ),
     );
   }
+
   openColorPicker() {
     showDialog(
       context: context,
@@ -651,6 +631,74 @@ class EditCategoryPageState extends State<EditCategoryPage> {
         tooltip: 'Add a new category'.i18n,
         child: const Icon(Icons.save),
       ),
+    );
+  }
+}
+
+class _ColorCircle extends StatelessWidget {
+  final int index;
+  final Color? color;
+  final EditCategoryProvider stateProvider;
+
+  const _ColorCircle({
+    required this.index,
+    required this.color,
+    required this.stateProvider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+      child: ClipOval(
+        child: Material(
+          color: color,
+          child: InkWell(
+            onTap: () => stateProvider.selectColor(index),
+            child: SizedBox(
+              width: 70,
+              height: 70,
+              child: ListenableBuilder(
+                listenable: stateProvider,
+                builder: (context, _) {
+                  return stateProvider.chosenColorIndex == index
+                      ? const Icon(Icons.check, color: Colors.white, size: 24)
+                      : const SizedBox.shrink();
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IconTile extends StatelessWidget {
+  final int index;
+  final IconData? iconData;
+  final EditCategoryProvider stateProvider;
+
+  const _IconTile({
+    required this.index,
+    required this.iconData,
+    required this.stateProvider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: stateProvider,
+      builder: (context, _) {
+        final bool isSelected = stateProvider.chosenIconIndex == index;
+        return IconButton(
+          icon: FaIcon(iconData),
+          color: isSelected
+              ? Theme.of(context).colorScheme.error
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          onPressed: () => stateProvider.selectIcon(index),
+        );
+      },
     );
   }
 }
