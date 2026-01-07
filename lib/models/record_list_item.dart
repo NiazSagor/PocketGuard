@@ -15,14 +15,13 @@ class RecordRowItem extends ListItem {
   RecordRowItem(this.record, {this.isLastInDay = false});
 }
 
-// In your controller or a helper:
+
 List<ListItem> flattenRecords(List<Record?> records) {
   final grouped = groupRecordsByDay(records);
   List<ListItem> flattened = [];
 
   for (var day in grouped) {
-    flattened.add(DayHeaderItem(day)); // Add the day header
-    // Add each record for that day
+    flattened.add(DayHeaderItem(day));
     final dayRecords = day.records!.reversed.toList();
     for (int i = 0; i < dayRecords.length; i++) {
       final rec = dayRecords[i];

@@ -204,46 +204,19 @@ class EditCategoryPageState extends State<EditCategoryPage> {
   }
 
   Widget _buildColorList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: Category.colors.length,
-      itemBuilder: /*1*/ (context, index) {
-        return Container(
-          margin: EdgeInsets.all(10),
-          child: Container(
-            width: 70,
-            child: ClipOval(
-              child: Material(
-                color: Category.colors[index], // button color
-                child: ListenableBuilder(
-                  listenable: _stateProvider,
-                  builder: (context, child) {
-                    return InkWell(
-                      splashColor: Colors.white30, // inkwell color
-                      child: (index == _stateProvider.chosenColorIndex)
-                          ? SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            )
-                          : Container(),
-                      onTap: () {
-                        _stateProvider.selectColor(index);
-                      },
-                    );
-                  }
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+    return SizedBox(
+      child: ListView.builder(
+        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
+        itemCount: Category.colors.length,
+        itemBuilder: (context, index) {
+          return _ColorCircle(
+            index: index,
+            color: Category.colors[index],
+            stateProvider: _stateProvider,
+          );
+        },
+      ),
     );
   }
 
@@ -650,6 +623,46 @@ class EditCategoryPageState extends State<EditCategoryPage> {
         onPressed: saveCategory,
         tooltip: 'Add a new category'.i18n,
         child: const Icon(Icons.save),
+      ),
+    );
+  }
+}
+
+
+class _ColorCircle extends StatelessWidget {
+  final int index;
+  final Color? color;
+  final EditCategoryProvider stateProvider;
+
+  const _ColorCircle({
+    required this.index,
+    required this.color,
+    required this.stateProvider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+      child: ClipOval(
+        child: Material(
+          color: color,
+          child: InkWell(
+            onTap: () => stateProvider.selectColor(index),
+            child: SizedBox(
+              width: 70,
+              height: 70,
+              child: ListenableBuilder(
+                listenable: stateProvider,
+                builder: (context, _) {
+                  return stateProvider.chosenColorIndex == index
+                      ? const Icon(Icons.check, color: Colors.white, size: 24)
+                      : const SizedBox.shrink();
+                },
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
