@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pocket_guard/models/category-icons.dart';
 import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/category.dart';
+import 'package:pocket_guard/models/category_factory.dart';
 import 'package:pocket_guard/services/database/database-interface.dart';
 
 class EditCategoryProvider extends ChangeNotifier {
@@ -57,7 +58,7 @@ class EditCategoryProvider extends ChangeNotifier {
       _category.categoryType = type ?? CategoryType.expense;
     } else {
       // Clone existing category (assuming you have a copy method or fromMap)
-      _category = Category.fromMap(passed.toMap());
+      _category = CategoryFactory.getOrCreate(passed.toMap());
       _categoryName = passed.name!;
     }
 

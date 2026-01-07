@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:pocket_guard/helpers/datetime-utility-functions.dart';
 import 'package:pocket_guard/models/category-type.dart';
 import 'package:pocket_guard/models/category.dart';
+import 'package:pocket_guard/models/category_factory.dart';
 import 'package:pocket_guard/models/record.dart';
 import 'package:pocket_guard/models/recurrent-record-pattern.dart';
 import 'package:pocket_guard/models/template.dart';
@@ -56,7 +57,7 @@ class SqliteDatabase implements DatabaseInterface {
     final db = (await database)!;
     List<Map> results = await db.query("categories");
     return List.generate(results.length, (i) {
-      return Category.fromMap(results[i] as Map<String, dynamic>);
+      return CategoryFactory.getOrCreate(results[i] as Map<String, dynamic>);
     });
   }
 
@@ -68,7 +69,7 @@ class SqliteDatabase implements DatabaseInterface {
         where: "name = ? AND category_type = ?",
         whereArgs: [categoryName, categoryType.index]);
     return results.isNotEmpty
-        ? Category.fromMap(results[0] as Map<String, dynamic>)
+        ? CategoryFactory.getOrCreate(results[0] as Map<String, dynamic>)
         : null;
   }
 
@@ -255,7 +256,7 @@ class SqliteDatabase implements DatabaseInterface {
     }
     var matching = List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return Record.fromMap(currentRowMap);
     });
     return (matching.isEmpty) ? null : matching.first;
@@ -282,7 +283,7 @@ class SqliteDatabase implements DatabaseInterface {
         """);
     return List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return Record.fromMap(currentRowMap);
     });
   }
@@ -407,7 +408,7 @@ class SqliteDatabase implements DatabaseInterface {
 
     final records = List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return Record.fromMap(currentRowMap);
     });
 
@@ -472,7 +473,7 @@ class SqliteDatabase implements DatabaseInterface {
     List<Map> results = await db.query("categories",
         where: "category_type = ?", whereArgs: [categoryType.index]);
     return List.generate(results.length, (i) {
-      return Category.fromMap(results[i] as Map<String, dynamic>);
+      return CategoryFactory.getOrCreate(results[i] as Map<String, dynamic>);
     });
   }
 
@@ -494,7 +495,7 @@ class SqliteDatabase implements DatabaseInterface {
         """);
     final allTemplates =  List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return Template.fromMap(currentRowMap);
     });
 
@@ -527,7 +528,7 @@ class SqliteDatabase implements DatabaseInterface {
 
     var results = List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return Record.fromMap(currentRowMap);
     });
 
@@ -589,7 +590,7 @@ class SqliteDatabase implements DatabaseInterface {
 
     var results = List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return RecurrentRecordPattern.fromMap(currentRowMap);
     });
 
@@ -608,7 +609,7 @@ class SqliteDatabase implements DatabaseInterface {
 
     var results = List.generate(maps.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return RecurrentRecordPattern.fromMap(currentRowMap);
     });
 
@@ -653,7 +654,7 @@ class SqliteDatabase implements DatabaseInterface {
 
     var results = List.generate(maps!.length, (i) {
       Map<String, dynamic> currentRowMap = Map<String, dynamic>.from(maps[i]);
-      currentRowMap["category"] = Category.fromMap(currentRowMap);
+      currentRowMap["category"] = CategoryFactory.getOrCreate(currentRowMap);
       return Record.fromMap(currentRowMap);
     });
 
