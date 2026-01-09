@@ -4,31 +4,36 @@ import 'package:pocket_guard/settings/style.dart';
 class SettingsItem extends StatelessWidget {
   final Icon icon;
   final String title;
-  final Function onPressed;
-
+  final Widget? titleWidget;
+  final VoidCallback onPressed;
   final String? subtitle;
   final Color? iconBackgroundColor;
 
-  SettingsItem(
-      {this.iconBackgroundColor,
-      required this.icon,
-      required this.title,
-      required this.onPressed,
-      this.subtitle});
+  const SettingsItem({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.onPressed,
+    this.titleWidget,
+    this.subtitle,
+    this.iconBackgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return RawMaterialButton(
+    return InkWell(
+      onTap: onPressed,
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: CircleAvatar(
-            backgroundColor:
-                iconBackgroundColor == null ? Colors.blue : iconBackgroundColor,
-            child: icon),
-        title: Text(title, style: titleTextStyle),
-        subtitle:
-            subtitle == null ? null : Text(subtitle!, style: subtitleTextStyle),
+          backgroundColor: iconBackgroundColor ?? Colors.blue,
+          child: icon,
+        ),
+        title: titleWidget ?? Text(title, style: titleTextStyle),
+        subtitle: subtitle != null
+            ? Text(subtitle!, style: subtitleTextStyle)
+            : null,
       ),
-      onPressed: onPressed as void Function()?,
     );
   }
 }
