@@ -213,7 +213,6 @@ class _CategoriesSummaryCardState extends State<CategoriesSummaryCard> {
             );
           },
         ),
-        const Divider(),
       ],
     );
   }
