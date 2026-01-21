@@ -95,67 +95,63 @@ class TabRecordsController {
   }
 
   void filterRecords() {
-    List<Record?> tempRecords;
-
-    final hasSearch = _searchController.text.isNotEmpty;
+    final query = _searchController.text.toLowerCase().trim();
+    final hasSearch = query.isNotEmpty;
     final hasCategories = selectedCategories.isNotEmpty;
     final hasTags = selectedTags.isNotEmpty;
 
+    // 1. Early exit if no filters are active
     if (!hasSearch && !hasCategories && !hasTags) {
-      tempRecords = records;
-    } else {
-      final query = _searchController.text.toLowerCase().trim();
-
-      tempRecords = records.where((record) {
-        bool matchesSearch = !hasSearch;
-        if (hasSearch) {
-          matchesSearch = _matchesSmartSearch(record?.title, query) ||
-              _matchesSmartSearch(record?.description, query) ||
-              _matchesSmartSearch(record?.category?.name, query) ||
-              _matchesSmartSearch(record?.tags.join(" "), query);
-        }
-
-        // Categories
-        bool matchesCategories = !hasCategories;
-        if (hasCategories) {
-          matchesCategories = selectedCategories.contains(record?.category);
-        }
-
-        // Tags
-        bool matchesTags = !hasTags;
-        if (hasTags && record?.tags != null) {
-          if (tagORLogic) {
-            // OR logic: any tag matches
-            matchesTags = selectedTags.any((tag) => record!.tags.contains(tag));
-          } else {
-            // AND logic: all tags must match
-            matchesTags =
-                selectedTags.every((tag) => record!.tags.contains(tag));
-          }
-        }
-
-        // Combine Categories + Tags depending on user choice
-        bool matchesCategoryTagCombo;
-        if (hasCategories && hasTags) {
-          if (categoryTagOrLogic) {
-            // OR between categories and tags
-            matchesCategoryTagCombo = matchesCategories || matchesTags;
-          } else {
-            // AND between categories and tags
-            matchesCategoryTagCombo = matchesCategories && matchesTags;
-          }
-        } else {
-          // If only one of them is active, just use that result
-          matchesCategoryTagCombo = matchesCategories && matchesTags;
-        }
-
-        // Final check includes search
-        return matchesSearch && matchesCategoryTagCombo;
-      }).toList();
+      _updateFilteredRecords(records);
+      return;
     }
 
-    if (!const DeepCollectionEquality().equals(filteredRecords, tempRecords)) {
-      filteredRecords = tempRecords;
+    // 2. Use Sets for O(1) lookup time if they aren't already
+    final categorySet = selectedCategories.toSet();
+    final tagSet = selectedTags.toSet();
+
+    final tempRecords = records.where((record) {
+      if (record == null) return false;
+
+      // Search Logic
+      bool matchesSearch = true;
+      if (hasSearch) {
+        matchesSearch = _matchesSmartSearch(record.title, query) ||
+            _matchesSmartSearch(record.description, query) ||
+            _matchesSmartSearch(record.category?.name, query) ||
+            _matchesSmartSearch(record.tags.join(" "), query);
+      }
+      if (!matchesSearch) return false; // Early exit for this record
+
+      // Category & Tag Logic
+      bool matchesCategories = hasCategories ? categorySet.contains(record.category) : false;
+
+      bool matchesTags = false;
+      if (hasTags) {
+        matchesTags = tagORLogic
+            ? record.tags.any((t) => tagSet.contains(t))
+            : tagSet.every((t) => record.tags.contains(t));
+      }
+
+      // Combine Category + Tags
+      bool matchesMetaData;
+      if (hasCategories && hasTags) {
+        matchesMetaData = categoryTagOrLogic ? (matchesCategories || matchesTags) : (matchesCategories && matchesTags);
+      } else {
+        // If only one is active, use the one that is active.
+        // If neither is active (but search was), this should be true.
+        matchesMetaData = !hasCategories && !hasTags ? true : (matchesCategories || matchesTags);
+      }
+
+      return matchesMetaData;
+    }).toList();
+
+    _updateFilteredRecords(tempRecords);
+  }
+
+  void _updateFilteredRecords(List<Record?> nextRecords) {
+    if (!const DeepCollectionEquality().equals(filteredRecords, nextRecords)) {
+      filteredRecords = nextRecords;
       onStateChanged();
     }
   }
